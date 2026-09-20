@@ -124,7 +124,7 @@ class ReportGenerator:
 
     @classmethod
     def export_to_pdf(cls, full_results: Dict[str, Any]) -> bytes:
-        """Generates a publication-ready PDF summary report."""
+        """Generates a publication-ready comprehensive PDF report."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
         elements = []
@@ -133,87 +133,157 @@ class ReportGenerator:
         title_style = ParagraphStyle(
             'TitleStyle',
             parent=styles['Heading1'],
-            fontSize=18,
+            fontSize=16,
             textColor=colors.HexColor('#0F172A'),
-            spaceAfter=12
+            spaceAfter=8
         )
         heading_style = ParagraphStyle(
             'HeadingStyle',
             parent=styles['Heading2'],
-            fontSize=13,
+            fontSize=12,
             textColor=colors.HexColor('#1E3A8A'),
-            spaceBefore=10,
-            spaceAfter=8
+            spaceBefore=12,
+            spaceAfter=6
         )
         body_style = styles['BodyText']
         
-        # Title & Subtitle
-        elements.append(Paragraph("Population Pharmacogenomics Executive Report", title_style))
-        elements.append(Paragraph("Automated Analysis of Genotype, Allele (p & q), HWE, Geographic Population Groups & Phenotypes", body_style))
-        elements.append(Spacer(1, 12))
+        # 1. Document Header
+        elements.append(Paragraph("Automated Population Pharmacogenomics Analysis Report", title_style))
+        elements.append(Paragraph("Development of an Automated Platform for Genotype, Allele, HWE, Diplotype, and CPIC Phenotype Analysis", body_style))
+        elements.append(Spacer(1, 10))
         
-        # Summary Overview Table
+        # 2. Executive Metadata Summary Table
         overall_stats = full_results.get('overall', {})
         total_samples = overall_stats.get('sample_count', 0)
         
-        table_data = [
-            ["Metric", "Value"],
-            ["Total Samples Analyzed", str(total_samples)],
-            ["Geographic Population Groups", "North India, South India, East India, West India"],
-            ["Target Pharmacogene", "CYP2C19 (*2, *3, *17)"]
+        meta_table = [
+            ["Parameter", "Details"],
+            ["Total Cohort Analyzed", f"{total_samples:,} Samples"],
+            ["Geographic Population Groups", "South India, North India, East India, West India, Central India"],
+            ["Target Gene / SNPs", "CYP2C19 (*2 rs4244285, *3 rs4986893, *17 rs12248560)"],
+            ["Statistical Engines", "Chi-Square Goodness-of-Fit (df=1) & Haldane Exact Test"],
+            ["Interpretation Framework", "CPIC Guidelines for CYP2C19 Metabolizer Phenotypes"]
         ]
         
-        t = Table(table_data, colWidths=[200, 300])
-        t.setStyle(TableStyle([
+        t_meta = Table(meta_table, colWidths=[180, 360])
+        t_meta.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (1, 0), colors.HexColor('#0F172A')),
             ('TEXTCOLOR', (0, 0), (1, 0), colors.white),
             ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (1, 0), 6),
+            ('BOTTOMPADDING', (0, 0), (1, 0), 5),
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8FAFC')),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1'))
         ]))
-        elements.append(t)
-        elements.append(Spacer(1, 14))
+        elements.append(t_meta)
+        elements.append(Spacer(1, 12))
         
-        # Geographic Population Groups Section
-        elements.append(Paragraph("Geographic Population Groups Summary", heading_style))
-        regional_results = full_results.get('regional', {})
-        reg_table_data = [["Geographic Group", "Sample N", "CYP2C19*2 Freq (A)", "HWE Status", "PM (%)"]]
+        # 3. Hardy-Weinberg Equilibrium (HWE) Summary Section
+        elements.append(Paragraph("1. Overall Population Hardy-Weinberg Equilibrium (HWE) Analysis", heading_style))
+        snps_data = overall_stats.get('snps', {})
+        hwe_table_data = [["SNP Variant", "Valid N", "Allele Freq p / q", "Chi2 (χ²)", "P-Value", "HWE Status"]]
         
-        for r_name in ['North India', 'South India', 'East India', 'West India']:
-            r_data = regional_results.get(r_name, {})
-            cyp2_a = r_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
-            hwe_stat = r_data.get('snps', {}).get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE')
-            pm_pct = r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
-            reg_table_data.append([r_name, str(r_data.get('sample_count', 0)), str(cyp2_a), hwe_stat, f"{pm_pct}%"])
+        for snp_name, s_res in snps_data.items():
+            hw = s_res.get('hwe', {})
+            af = s_res.get('allele_freqs', {})
+            ref_a = list(af.keys())[0] if af else 'Ref'
+            var_a = list(af.keys())[1] if len(af) > 1 else 'Var'
+            freq_str = f"{ref_a}:{af.get(ref_a, 0)} · {var_a}:{af.get(var_a, 0)}"
+            hwe_table_data.append([
+                snp_name,
+                str(s_res.get('valid_samples', 0)),
+                freq_str,
+                str(hw.get('chi2_stat', 0)),
+                str(hw.get('p_value', 1.0)),
+                str(hw.get('interpretation', 'In HWE'))
+            ])
             
-        rtable = Table(reg_table_data, colWidths=[120, 80, 110, 100, 90])
-        rtable.setStyle(TableStyle([
+        t_hwe = Table(hwe_table_data, colWidths=[90, 60, 150, 70, 70, 100])
+        t_hwe.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1'))
         ]))
-        elements.append(rtable)
-        elements.append(Spacer(1, 14))
+        elements.append(t_hwe)
+        elements.append(Spacer(1, 12))
 
-        # Phenotype Breakdown Section
-        elements.append(Paragraph("CYP2C19 Phenotype Summary (Overall Population)", heading_style))
-        pgx = overall_stats.get('cyp2c19_summary', {}).get('phenotypes', {})
+        # 4. Geographic Population Groups Section (All 5 Regions)
+        elements.append(Paragraph("2. Geographic Population Groups Matrix (All 5 Regions)", heading_style))
+        regional_results = full_results.get('regional', {})
+        all_regions = ['South India', 'North India', 'East India', 'West India', 'Central India']
         
-        p_table_data = [["Metabolizer Phenotype", "Count", "Percentage (%)"]]
-        for pheno_name, pdata in pgx.items():
+        reg_table_data = [["Geographic Region", "Sample N", "*2 Var Freq f(A)", "*2 Chi2 (P-Val)", "*17 Var Freq f(T)", "PM (%)"]]
+        for r_name in all_regions:
+            r_data = regional_results.get(r_name, {})
+            r_snps = r_data.get('snps', {})
+            cyp2_a = r_snps.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+            cyp2_chi = r_snps.get('CYP2C19*2', {}).get('hwe', {}).get('chi2_stat', 0)
+            cyp2_p = r_snps.get('CYP2C19*2', {}).get('hwe', {}).get('p_value', 1.0)
+            cyp17_t = r_snps.get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0)
+            pm_pct = r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+            
+            reg_table_data.append([
+                r_name,
+                str(r_data.get('sample_count', 0)),
+                str(cyp2_a),
+                f"{cyp2_chi} (p={cyp2_p})",
+                str(cyp17_t),
+                f"{pm_pct}%"
+            ])
+            
+        t_reg = Table(reg_table_data, colWidths=[110, 70, 110, 110, 80, 60])
+        t_reg.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0F766E')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1'))
+        ]))
+        elements.append(t_reg)
+        elements.append(Spacer(1, 12))
+
+        # 5. Gender Stratification Section
+        elements.append(Paragraph("3. Gender Stratification Analysis (Male vs Female vs Overall)", heading_style))
+        gender_results = full_results.get('gender', {})
+        g_table_data = [["Cohort / Gender", "Sample N", "*2 Var Freq f(A)", "*17 Var Freq f(T)", "Normal (NM) %", "Poor (PM) %"]]
+        
+        for g_name in ['Male', 'Female']:
+            g_data = gender_results.get(g_name, {})
+            g_snps = g_data.get('snps', {})
+            cyp2_a = g_snps.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+            cyp17_t = g_snps.get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0)
+            g_phenos = g_data.get('cyp2c19_summary', {}).get('phenotypes', {})
+            nm_p = g_phenos.get('Normal Metabolizer (NM)', {}).get('percentage', 0)
+            pm_p = g_phenos.get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+            
+            g_table_data.append([g_name, str(g_data.get('sample_count', 0)), str(cyp2_a), str(cyp17_t), f"{nm_p}%", f"{pm_p}%"])
+            
+        t_gen = Table(g_table_data, colWidths=[110, 70, 110, 110, 80, 60])
+        t_gen.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4338CA')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1'))
+        ]))
+        elements.append(t_gen)
+        elements.append(Spacer(1, 12))
+
+        # 6. CPIC Diplotypes & Metabolizer Phenotypes Section
+        elements.append(Paragraph("4. CPIC CYP2C19 Diplotypes & Metabolizer Phenotypes", heading_style))
+        pgx = overall_stats.get('cyp2c19_summary', {})
+        pheno_data = pgx.get('phenotypes', {})
+        
+        p_table_data = [["Metabolizer Phenotype Category", "Count (N)", "Percentage (%)"]]
+        for pheno_name, pdata in pheno_data.items():
             p_table_data.append([pheno_name, str(pdata.get('count', 0)), f"{pdata.get('percentage', 0)}%"])
             
-        ptable = Table(p_table_data, colWidths=[250, 100, 150])
-        ptable.setStyle(TableStyle([
+        t_pheno = Table(p_table_data, colWidths=[240, 130, 170])
+        t_pheno.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E40AF')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#9CA3AF'))
         ]))
-        elements.append(ptable)
-        elements.append(Spacer(1, 16))
+        elements.append(t_pheno)
 
         doc.build(elements)
         return buffer.getvalue()
