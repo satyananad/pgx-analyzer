@@ -184,9 +184,10 @@ with st.sidebar:
             "🧬 5. Genotype & Allele Frequencies",
             "⚖️ 6. Hardy-Weinberg Equilibrium",
             "🌐 7. Geographic Population Groups",
-            "📍 8. Dedicated State-Wise Pages",
-            "💊 9. CYP2C19 Calling & Phenotypes",
-            "📄 10. Live Preview & Download Report"
+            "👫 8. Gender-Wise Analysis",
+            "📍 9. Dedicated State-Wise Pages",
+            "💊 10. CYP2C19 Calling & Phenotypes",
+            "📄 11. Live Preview & Download Report"
         ],
         index=0
     )
@@ -608,9 +609,122 @@ elif nav_option == "🌐 7. Geographic Population Groups":
             st.table(pd.DataFrame(p_list))
 
 # -----------------------------------------------------------------------------
-# VIEW 8: STATE-WISE ANALYSIS PAGES
+# VIEW 8: GENDER-WISE ANALYSIS
 # -----------------------------------------------------------------------------
-elif nav_option == "📍 8. Dedicated State-Wise Pages":
+elif nav_option == "👫 8. Gender-Wise Analysis":
+    st.markdown("## 👫 Gender-Wise Population Pharmacogenomics Analysis")
+    st.caption("Complete comparative genetic & pharmacogenomic stratification across Male, Female, and Overall cohorts.")
+    
+    if full_results is not None:
+        gender_data = full_results.get('gender', {})
+        male = gender_data.get('Male', {})
+        female = gender_data.get('Female', {})
+        overall = full_results.get('overall', {})
+        
+        m_count = male.get('sample_count', 0)
+        f_count = female.get('sample_count', 0)
+        tot_count = overall.get('sample_count', 0)
+        
+        m_pct = round((m_count / tot_count * 100), 1) if tot_count > 0 else 0
+        f_pct = round((f_count / tot_count * 100), 1) if tot_count > 0 else 0
+        
+        m_cyp2_freq = male.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+        f_cyp2_freq = female.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+        
+        m_pm_pct = male.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+        f_pm_pct = female.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+        
+        # 5 Top KPI Cards
+        gk1, gk2, gk3, gk4, gk5 = st.columns(5)
+        gk1.metric("Male Samples (N)", f"{m_count:,}", f"{m_pct}% of total")
+        gk2.metric("Female Samples (N)", f"{f_count:,}", f"{f_pct}% of total")
+        gk3.metric("Male *2 Var Freq f(A)", m_cyp2_freq)
+        gk4.metric("Female *2 Var Freq f(A)", f_cyp2_freq)
+        gk5.metric("PM Rate (Male vs Female)", f"{m_pm_pct}% vs {f_pm_pct}%")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Comprehensive Gender Stratification Summary Table")
+        st.caption("Includes exact allele counts, genotype counts, allele frequencies f(A)/f(G)/f(C)/f(T), expected counts, Chi-Square (\\chi^2), P-values, and CPIC Phenotype distributions for Male vs Female.")
+        
+        g_rows = []
+        for g_label, g_dict in [('Male', male), ('Female', female), ('Overall Population', overall)]:
+            if g_dict:
+                snps = g_dict.get('snps', {})
+                cyp2 = snps.get('CYP2C19*2', {})
+                cyp17 = snps.get('CYP2C19*17', {})
+                
+                cyp2_ac = cyp2.get('allele_counts', {})
+                cyp2_af = cyp2.get('allele_freqs', {})
+                cyp2_gc = cyp2.get('genotype_counts', {})
+                cyp2_hwe = cyp2.get('hwe', {})
+                
+                cyp17_ac = cyp17.get('allele_counts', {})
+                cyp17_af = cyp17.get('allele_freqs', {})
+                cyp17_gc = cyp17.get('genotype_counts', {})
+                cyp17_hwe = cyp17.get('hwe', {})
+                
+                phenos = g_dict.get('cyp2c19_summary', {}).get('phenotypes', {})
+                
+                g_rows.append({
+                    'Cohort / Gender': g_label,
+                    'Sample N': g_dict.get('sample_count', 0),
+                    '*2 A Count': cyp2_ac.get('A', 0),
+                    '*2 G Count': cyp2_ac.get('G', 0),
+                    '*2 f(A)': cyp2_af.get('A', 0),
+                    '*2 f(G)': cyp2_af.get('G', 0),
+                    '*2 GA / AA / GG': f"{cyp2_gc.get('GA', 0)} / {cyp2_gc.get('AA', 0)} / {cyp2_gc.get('GG', 0)}",
+                    '*2 Chi2 Stat': cyp2_hwe.get('chi2_stat', 0),
+                    '*2 P-Value': cyp2_hwe.get('p_value', 1.0),
+                    '*2 HWE Status': cyp2_hwe.get('interpretation', 'In HWE'),
+                    '*17 C Count': cyp17_ac.get('C', 0),
+                    '*17 T Count': cyp17_ac.get('T', 0),
+                    '*17 f(C)': cyp17_af.get('C', 0),
+                    '*17 f(T)': cyp17_af.get('T', 0),
+                    '*17 CC / CT / TT': f"{cyp17_gc.get('CC', 0)} / {cyp17_gc.get('CT', 0)} / {cyp17_gc.get('TT', 0)}",
+                    'Normal (NM) %': f"{phenos.get('Normal Metabolizer (NM)', {}).get('percentage', 0)}%",
+                    'Intermediate (IM) %': f"{phenos.get('Intermediate Metabolizer (IM)', {}).get('percentage', 0)}%",
+                    'Poor (PM) %': f"{phenos.get('Poor Metabolizer (PM)', {}).get('percentage', 0)}%"
+                })
+        st.dataframe(pd.DataFrame(g_rows), use_container_width=True)
+        
+        # Gender Visualizations
+        st.markdown("### 📈 Visual Comparison: Male vs Female Cohorts")
+        gc1, gc2 = st.columns(2)
+        with gc1:
+            st.markdown("**CYP2C19*2 Genotype Breakdown by Gender**")
+            m_gc = male.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
+            f_gc = female.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
+            
+            gen_chart_df = pd.DataFrame([
+                {'Gender': 'Male', 'Genotype': 'GG', 'Count': m_gc.get('GG', 0)},
+                {'Gender': 'Male', 'Genotype': 'GA', 'Count': m_gc.get('GA', 0)},
+                {'Gender': 'Male', 'Genotype': 'AA', 'Count': m_gc.get('AA', 0)},
+                {'Gender': 'Female', 'Genotype': 'GG', 'Count': f_gc.get('GG', 0)},
+                {'Gender': 'Female', 'Genotype': 'GA', 'Count': f_gc.get('GA', 0)},
+                {'Gender': 'Female', 'Genotype': 'AA', 'Count': f_gc.get('AA', 0)}
+            ])
+            fig_g1 = px.bar(gen_chart_df, x='Genotype', y='Count', color='Gender', barmode='group', title="CYP2C19*2 Genotype Counts by Gender")
+            st.plotly_chart(fig_g1, use_container_width=True)
+            
+        with gc2:
+            st.markdown("**CPIC Phenotype Distributions by Gender**")
+            m_phenos = male.get('cyp2c19_summary', {}).get('phenotypes', {})
+            f_phenos = female.get('cyp2c19_summary', {}).get('phenotypes', {})
+            
+            pheno_chart_df = []
+            for p_name in PHENOTYPE_ORDER:
+                if p_name in m_phenos:
+                    pheno_chart_df.append({'Gender': 'Male', 'Phenotype': p_name.split(' (')[0], 'Count': m_phenos[p_name]['count']})
+                if p_name in f_phenos:
+                    pheno_chart_df.append({'Gender': 'Female', 'Phenotype': p_name.split(' (')[0], 'Count': f_phenos[p_name]['count']})
+                    
+            fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes by Gender")
+            st.plotly_chart(fig_g2, use_container_width=True)
+
+# -----------------------------------------------------------------------------
+# VIEW 9: DEDICATED STATE-WISE PAGES
+# -----------------------------------------------------------------------------
+elif nav_option == "📍 9. Dedicated State-Wise Pages":
     st.markdown("## 📍 Dedicated Individual State Profiles")
     st.caption("Detailed Pharmacogenomic breakdown for every state present in the dataset.")
     
@@ -643,9 +757,9 @@ elif nav_option == "📍 8. Dedicated State-Wise Pages":
                 st.table(pd.DataFrame([{'Phenotype': k, 'Count': v['count'], 'Percentage': f"{v['percentage']}%"} for k, v in phenos.items()]))
 
 # -----------------------------------------------------------------------------
-# VIEW 9: CYP2C19 CALLING & PHENOTYPES
+# VIEW 10: CYP2C19 CALLING & PHENOTYPES
 # -----------------------------------------------------------------------------
-elif nav_option == "💊 9. CYP2C19 Calling & Phenotypes":
+elif nav_option == "💊 10. CYP2C19 Calling & Phenotypes":
     st.markdown("## 💊 CYP2C19 Star Allele, Diplotype & CPIC Phenotypes")
     st.caption("CPIC Metabolizer Phenotype Calls: Ultrarapid (UM), Rapid (RM), Normal (NM), Intermediate (IM), and Poor Metabolizer (PM)")
     
@@ -662,9 +776,9 @@ elif nav_option == "💊 9. CYP2C19 Calling & Phenotypes":
             st.table(pd.DataFrame([{'Diplotype Call': k, 'Count': v['count'], 'Frequency': v['frequency'], 'Percentage': f"{v['percentage']}%"} for k, v in pgx['diplotypes'].items()]))
 
 # -----------------------------------------------------------------------------
-# VIEW 10: LIVE PREVIEW & DOWNLOAD REPORT
+# VIEW 11: LIVE PREVIEW & DOWNLOAD REPORT
 # -----------------------------------------------------------------------------
-elif nav_option == "📄 10. Live Preview & Download Report":
+elif nav_option == "📄 11. Live Preview & Download Report":
     st.markdown("## 📄 Live Report Preview & Multi-Format Exporters")
     st.caption("Review full statistical document preview below before initiating file export.")
     
