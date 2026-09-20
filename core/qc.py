@@ -15,12 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class DataQCEngine:
-    def __init__(self, df: pd.DataFrame, existing_sample_ids: Set[str] = None):
+    def __init__(self, df: pd.DataFrame, existing_sample_ids: Set[str] = None, custom_col_mapping: Dict[str, str] = None):
         """
         Initialize QC Engine with a raw DataFrame.
         """
         self.raw_df = df.copy()
         self.existing_sample_ids = set(existing_sample_ids) if existing_sample_ids else set()
+        self.custom_col_mapping = custom_col_mapping or {}
         self.clean_df = pd.DataFrame()
         self.qc_report = {}
 
@@ -32,18 +33,24 @@ class DataQCEngine:
         df = self.raw_df.copy()
         col_mapping = {}
         
+        # 1. Apply user custom mappings if provided
+        for raw_col, target_col in self.custom_col_mapping.items():
+            if raw_col in df.columns and target_col and target_col != "(None)":
+                col_mapping[raw_col] = target_col
+        
         for col in df.columns:
+            if col in col_mapping:
+                continue
             col_str = str(col).strip()
             col_lower = col_str.lower()
             
-            # 1. Specific SNP rules first
+            # Specific SNP rules first
             if 'cyp2c19*2' in col_lower or 'rs4244285' in col_lower:
                 col_mapping[col] = 'CYP2C19*2'
             elif 'cyp2c19*3' in col_lower or 'rs4986893' in col_lower:
                 col_mapping[col] = 'CYP2C19*3'
             elif 'cyp2c19*17' in col_lower or 'rs12248560' in col_lower:
                 col_mapping[col] = 'CYP2C19*17'
-            # 2. 3 Generations Residency rule BEFORE Native Place rule
             elif '3 generation' in col_lower or '3_generation' in col_lower or 'past 3' in col_lower or 'generation' in col_lower:
                 col_mapping[col] = 'Three_Generations_Residency'
             elif 'native' in col_lower:

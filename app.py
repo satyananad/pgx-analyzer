@@ -151,6 +151,8 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # -----------------------------------------------------------------------------
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
+if 'wizard_step' not in st.session_state:
+    st.session_state['wizard_step'] = 1
 
 demo_file_path = "categorized by state into North, South, East, West .xlsx"
 if st.session_state['uploaded_df'] is None and os.path.exists(demo_file_path):
@@ -192,6 +194,7 @@ with st.sidebar:
     if os.path.exists(demo_file_path):
         if st.button("🔄 Reload Workspace Dataset (1,044 Samples)", use_container_width=True):
             st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
+            st.session_state['wizard_step'] = 1
             st.success("Loaded workspace dataset!")
             st.rerun()
 
@@ -413,146 +416,204 @@ def render_unified_results(full_results: dict, qc_report: dict):
             fig_donut.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
             st.plotly_chart(fig_donut, use_container_width=True)
 
-# -----------------------------------------------------------------------------
-# VIEW 1: WELCOME & INTERACTIVE DATA ENTRY SCREEN
-# -----------------------------------------------------------------------------
-if nav_option == "🏠 1. Welcome & Data Entry":
-    st.markdown("""
-    <div class="hero-banner">
-        <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
-        <div class="hero-subtitle">
-            Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
-        </div>
-        <div class="pipeline-container">
-            <span class="pipeline-step">1. Excel / Manual Entry</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">2. Data QC Audit</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">3. Genotype Normalization</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">4. Allele Freq (p & q)</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">5. HWE Chi2 Test</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">6. Geographic Groups</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">7. State Pages</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">8. Star Alleles</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">9. Diplotypes</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">10. CPIC Phenotypes</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">11. Visualizations</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">12. Multi-Export</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# Helper function to render step wizard top bar (Matching Image media_1789937076505.jpg)
+def render_step_wizard_bar(current_step):
+    c1, c2, c3 = st.columns(3)
     
-    st.markdown("""
-    <div class="feature-callout-box">
-        <div class="feature-callout-title">✨ Continuous Incremental Sample Insertion & Auto-Validation</div>
-        <div style="font-size: 0.9rem; color: #166534; margin-bottom: 0.4rem;">
-            Upload existing datasets or enter new individual patient records manually below. The platform automatically validates entries, checks for duplicates, flags invalid genotype calls with warnings, and updates population frequencies in real-time.
+    style1 = "background: #166534; color: white;" if current_step == 1 else "background: #E2E8F0; color: #334155;"
+    style2 = "background: #166534; color: white;" if current_step == 2 else "background: #E2E8F0; color: #334155;"
+    style3 = "background: #166534; color: white;" if current_step == 3 else "background: #E2E8F0; color: #334155;"
+    
+    if c1.button("1 - Upload", use_container_width=True):
+        st.session_state['wizard_step'] = 1
+        st.rerun()
+    if c2.button("2 - Map columns", use_container_width=True):
+        st.session_state['wizard_step'] = 2
+        st.rerun()
+    if c3.button("3 - Results", use_container_width=True):
+        st.session_state['wizard_step'] = 3
+        st.rerun()
+
+# -----------------------------------------------------------------------------
+# VIEW 1: WELCOME & STEP-WISE WIZARD FLOW
+# -----------------------------------------------------------------------------
+if nav_option in ["🏠 1. Welcome & Data Entry", "📂 2. Upload & Map Columns", "📊 3. Executive Dashboard"]:
+    # Sync navigation option to step if user clicks directly from sidebar
+    if nav_option == "📂 2. Upload & Map Columns" and st.session_state['wizard_step'] != 2:
+        st.session_state['wizard_step'] = 2
+    elif nav_option == "📊 3. Executive Dashboard" and st.session_state['wizard_step'] != 3:
+        st.session_state['wizard_step'] = 3
+
+    current_step = st.session_state['wizard_step']
+    render_step_wizard_bar(current_step)
+    
+    # -------------------------------------------------------------------------
+    # STEP 1: UPLOAD & DATA ENTRY
+    # -------------------------------------------------------------------------
+    if current_step == 1:
+        st.markdown("""
+        <div class="hero-banner">
+            <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
+            <div class="hero-subtitle">
+                Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+        
+        col_w1, col_w2 = st.columns([1.2, 0.8])
+        with col_w1:
+            st.markdown("### 📂 Upload Dataset File")
+            file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="step1_uploader")
+            if file_upload is not None:
+                try:
+                    if file_upload.name.endswith('.csv'):
+                        df_load = pd.read_csv(file_upload)
+                    else:
+                        df_load = pd.read_excel(file_upload)
+                    st.session_state['uploaded_df'] = df_load
+                    st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
+                    st.session_state['wizard_step'] = 2
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error loading file: {e}")
 
-    col_w1, col_w2 = st.columns([1.2, 0.8])
-    with col_w1:
-        st.markdown("### ➕ Manual Sample Data Entry Form")
-        with st.form("manual_sample_form", clear_on_submit=True):
-            f_c1, f_c2 = st.columns(2)
-            in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
-            in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
-            
-            f_c3, f_c4 = st.columns(2)
-            in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
-            in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
-            
-            in_native = st.text_input("Native Place (City / District)", value=in_state)
-            in_3gen = st.selectbox("Family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
-            
-            st.markdown("##### CYP2C19 Target Genotypes")
-            fg1, fg2, fg3 = st.columns(3)
-            in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid)"])
-            in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "GA", "AA", "Missing", "TT (Invalid)"])
-            in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid)"])
-            
-            submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
-            
-            if submit_sample:
-                new_row = {
-                    'sample ID': in_sid,
-                    'Gender': in_gender,
-                    'Date of Birth': in_dob,
-                    'Native place ': in_native,
-                    'State': in_state,
-                    'Test requested': 'CYP2C19 Genotyping',
-                    'Is their family lived at Native place for past 3 generations?': in_3gen,
-                    'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else in_cyp2,
-                    'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else in_cyp3,
-                    'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else in_cyp17
-                }
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### ➕ Manual Sample Data Entry Form")
+            with st.form("manual_sample_form", clear_on_submit=True):
+                f_c1, f_c2 = st.columns(2)
+                in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
+                in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
                 
-                if st.session_state['uploaded_df'] is not None:
-                    st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
-                else:
-                    st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+                f_c3, f_c4 = st.columns(2)
+                in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
+                in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
+                
+                in_native = st.text_input("Native Place (City / District)", value=in_state)
+                in_3gen = st.selectbox("Family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
+                
+                st.markdown("##### CYP2C19 Target Genotypes")
+                fg1, fg2, fg3 = st.columns(3)
+                in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid)"])
+                in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "GA", "AA", "Missing", "TT (Invalid)"])
+                in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid)"])
+                
+                submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
+                
+                if submit_sample:
+                    new_row = {
+                        'sample ID': in_sid,
+                        'Gender': in_gender,
+                        'Date of Birth': in_dob,
+                        'Native place ': in_native,
+                        'State': in_state,
+                        'Test requested': 'CYP2C19 Genotyping',
+                        'Is their family lived at Native place for past 3 generations?': in_3gen,
+                        'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else in_cyp2,
+                        'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else in_cyp3,
+                        'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else in_cyp17
+                    }
                     
-                st.success(f"Sample {in_sid} added successfully! Statistics recalculated across all geographic groups.")
-                st.rerun()
+                    if st.session_state['uploaded_df'] is not None:
+                        st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
+                    else:
+                        st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+                        
+                    st.success(f"Sample {in_sid} added successfully!")
+                    st.session_state['wizard_step'] = 2
+                    st.rerun()
 
-    with col_w2:
-        st.markdown("### 📊 Current Cohort Statistics")
-        if full_results is not None:
-            st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
-            st.metric("Geographic Groups Covered", "South, North, East, West, Central India")
-            st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
+        with col_w2:
+            st.markdown("### 📊 Current Cohort Summary")
+            if full_results is not None:
+                st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
+                st.metric("Geographic Groups Covered", "South, North, East, West, Central India")
+                st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("➡️ Proceed to Step 2: Map Columns", type="primary", use_container_width=True):
+                    st.session_state['wizard_step'] = 2
+                    st.rerun()
+
+    # -------------------------------------------------------------------------
+    # STEP 2: MAP COLUMNS (MATCHING EXACT SCREENSHOT media_1789937076505.jpg)
+    # -------------------------------------------------------------------------
+    elif current_step == 2:
+        st.markdown("## Map your columns")
+        num_cols = len(df_raw.columns) if df_raw is not None else 0
+        num_rows = len(df_raw) if df_raw is not None else 0
+        st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
+        
+        if df_raw is not None:
+            all_cols = list(df_raw.columns)
+            
+            def find_default(patterns, cols):
+                for pattern in patterns:
+                    for c in cols:
+                        if pattern.lower() in str(c).lower():
+                            return c
+                return cols[0] if cols else ""
+
+            col_m1, col_m2, col_m3 = st.columns(3)
+            sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
+            gender_def = find_default(['gender', 'sex'], all_cols)
+            region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
+            
+            sel_sid = col_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
+            sel_gen = col_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
+            sel_reg = col_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
             
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### 📄 Quick Export")
-            excel_bytes = ReportGenerator.export_to_excel(full_results)
-            st.download_button(
-                "⬇ Download Full Excel Report (.xlsx)",
-                data=excel_bytes,
-                file_name="PGx_Population_Report.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
+            st.markdown("### CYP2C19 SNP columns")
+            st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
+            
+            # SNP Box 1: rs4244285 (*2)
+            st.markdown("""
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+                <h5 style="margin-top: 0; color: #0F172A;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            c1_1, c1_2, c1_3 = st.columns(3)
+            cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
+            sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="snp2_col")
+            c1_2.text_input("Reference allele (*2)", value="G", key="ref_2")
+            c1_3.text_input("Variant allele (*2)", value="A", key="var_2")
+            
+            # SNP Box 2: rs4986893 (*3)
+            st.markdown("""
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+                <h5 style="margin-top: 0; color: #0F172A;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            c2_1, c2_2, c2_3 = st.columns(3)
+            cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
+            sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="snp3_col")
+            c2_2.text_input("Reference allele (*3)", value="G", key="ref_3")
+            c2_3.text_input("Variant allele (*3)", value="A", key="var_3")
+            
+            # SNP Box 3: rs12248560 (*17)
+            st.markdown("""
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+                <h5 style="margin-top: 0; color: #0F172A;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            c3_1, c3_2, c3_3 = st.columns(3)
+            cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
+            sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="snp17_col")
+            c3_2.text_input("Reference allele (*17)", value="C", key="ref_17")
+            c3_3.text_input("Variant allele (*17)", value="T", key="var_17")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("➡️ Proceed to Step 3: View Results Dashboard", type="primary", use_container_width=True):
+                st.session_state['wizard_step'] = 3
+                st.rerun()
 
-# -----------------------------------------------------------------------------
-# VIEW 2: UPLOAD & MAP COLUMNS (MATCHING SCREENSHOT 1 & 4)
-# -----------------------------------------------------------------------------
-elif nav_option == "📂 2. Upload & Map Columns":
-    st.markdown("## Map your columns")
-    st.caption(f"Tell the analyzer which columns hold which field. Detected {len(df_raw.columns) if df_raw is not None else 0} columns, {len(df_raw):,} rows.")
-    
-    # Wizard Bar (Matching Screenshot 4)
-    st.markdown("""
-    <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-        <div style="flex: 1; padding: 10px; background: #E2E8F0; text-align: center; font-weight: bold; border-radius: 6px;">1 - Upload</div>
-        <div style="flex: 1; padding: 10px; background: #E2E8F0; text-align: center; font-weight: bold; border-radius: 6px;">2 - Map columns</div>
-        <div style="flex: 1; padding: 10px; background: #166534; color: white; text-align: center; font-weight: bold; border-radius: 6px;">3 - Results</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="map_uploader")
-    if file_upload is not None:
-        try:
-            if file_upload.name.endswith('.csv'):
-                df_load = pd.read_csv(file_upload)
-            else:
-                df_load = pd.read_excel(file_upload)
-            st.session_state['uploaded_df'] = df_load
-            st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error loading file: {e}")
-
-    if full_results is not None:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📊 Interactive Results (Matching Step 3 UI)")
+    # -------------------------------------------------------------------------
+    # STEP 3: RESULTS DASHBOARD
+    # -------------------------------------------------------------------------
+    elif current_step == 3:
+        st.markdown("## 📊 Executive Summary Results Dashboard")
+        st.caption("Cohort Parameters, Regional Comparison & CPIC Phenotype Distributions")
         render_unified_results(full_results, qc_report)
-
-# -----------------------------------------------------------------------------
-# VIEW 3: EXECUTIVE DASHBOARD (MATCHING SCREENSHOTS 1, 2, 3, 4)
-# -----------------------------------------------------------------------------
-elif nav_option == "📊 3. Executive Dashboard":
-    st.markdown("## 📊 Executive Summary Dashboard")
-    st.caption("Cohort Parameters, Regional Comparison & CPIC Phenotype Distributions")
-    render_unified_results(full_results, qc_report)
 
 # -----------------------------------------------------------------------------
 # VIEW 4: DATA QUALITY & MISSING AUDIT
