@@ -412,24 +412,13 @@ elif nav_option == "📊 3. Executive Dashboard":
         k3.metric("Intermediate Metabolizers (IM)", f"{pgx.get('Intermediate Metabolizer (IM)', {}).get('percentage', 0)}%")
         k4.metric("CYP2C19*2 HWE Status", ov.get('snps', {}).get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE'))
 
-        ch1, ch2 = st.columns(2)
-        with ch1:
-            st.markdown("### 🍩 Overall Metabolizer Phenotype Breakdown")
-            p_labels = [k.replace(' Metabolizer', '') for k, v in pgx.items() if v['count'] > 0]
-            p_vals = [v['count'] for k, v in pgx.items() if v['count'] > 0]
-            fig_pie = px.pie(names=p_labels, values=p_vals, hole=0.45, color_discrete_sequence=px.colors.qualitative.Set2)
-            st.plotly_chart(fig_pie, use_container_width=True)
-            
-        with ch2:
-            st.markdown("### 📊 Regional Variant Allele Frequency Comparison")
-            reg = full_results['regional']
-            r_names = ['South India', 'North India', 'East India', 'West India', 'Central India']
-            cyp2_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0) for r in r_names]
-            cyp17_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0) for r in r_names]
-            
-            comp_df = pd.DataFrame({'Region': r_names, 'CYP2C19*2 (Var A)': cyp2_freqs, 'CYP2C19*17 (Var T)': cyp17_freqs})
-            fig_reg = px.bar(comp_df, x='Region', y=['CYP2C19*2 (Var A)', 'CYP2C19*17 (Var T)'], barmode='group', title="Allele Frequencies by Region")
-            st.plotly_chart(fig_reg, use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 🍩 Primary Visual: Overall CPIC Metabolizer Phenotype Breakdown")
+        st.caption("Distribution of Ultrarapid (UM), Rapid (RM), Normal (NM), Intermediate (IM), and Poor Metabolizers (PM) in the cohort.")
+        p_labels = [k.replace(' Metabolizer', '') for k, v in pgx.items() if v['count'] > 0]
+        p_vals = [v['count'] for k, v in pgx.items() if v['count'] > 0]
+        fig_pie = px.pie(names=p_labels, values=p_vals, hole=0.45, color_discrete_sequence=px.colors.qualitative.Set2, title="Overall Metabolizer Phenotypes Donut Chart")
+        st.plotly_chart(fig_pie, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 4: DATA QUALITY & MISSING AUDIT
@@ -456,6 +445,15 @@ elif nav_option == "🛡️ 4. Data Quality & Missing Audit":
                 'Quality Audit Status': 'PASS'
             })
         st.table(pd.DataFrame(qc_rows))
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Primary Visual: Valid Samples & Missing Genotypes Breakdown per SNP")
+        qc_chart_df = []
+        for snp, sdata in qc_report['snp_qc_stats'].items():
+            qc_chart_df.append({'SNP Variant': snp, 'Status': 'Valid Samples', 'Count': sdata['valid_samples']})
+            qc_chart_df.append({'SNP Variant': snp, 'Status': 'Missing Genotypes', 'Count': sdata['missing_samples']})
+        fig_qc = px.bar(pd.DataFrame(qc_chart_df), x='SNP Variant', y='Count', color='Status', barmode='stack', title="Quality Control Audit per SNP", color_discrete_map={'Valid Samples': '#10B981', 'Missing Genotypes': '#EF4444'})
+        st.plotly_chart(fig_qc, use_container_width=True)
         
         if qc_report['duplicate_sample_ids']:
             st.warning(f"Duplicate Sample IDs Detected: {', '.join(qc_report['duplicate_sample_ids'][:10])}")
@@ -489,6 +487,15 @@ elif nav_option == "🧬 5. Genotype & Allele Frequencies":
                 a_f = s_res['allele_freqs']
                 al_df = pd.DataFrame([{'Allele': k, 'Count': v, 'Frequency (p/q)': a_f.get(k, 0), 'Percentage': f"{a_p.get(k, 0)}%"} for k, v in a_c.items()])
                 st.table(al_df)
+                
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Primary Visual: Allele Frequency Distribution (p & q) Across Target SNPs")
+        af_chart_rows = []
+        for snp_name, s_res in snps_data.items():
+            for al, val in s_res['allele_freqs'].items():
+                af_chart_rows.append({'SNP Variant': snp_name, 'Allele': f"Allele {al}", 'Frequency (p/q)': val})
+        fig_af = px.bar(pd.DataFrame(af_chart_rows), x='SNP Variant', y='Frequency (p/q)', color='Allele', barmode='group', title="Allele Frequency (p & q) Comparison")
+        st.plotly_chart(fig_af, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 6: HARDY-WEINBERG EQUILIBRIUM
@@ -514,6 +521,18 @@ elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
                 'HWE Status': hw['interpretation']
             })
         st.table(pd.DataFrame(hwe_rows))
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Primary Visual: Observed vs Expected Genotype Frequencies under HWE")
+        hwe_chart_rows = []
+        for snp_name, s_res in snps_data.items():
+            obs_dict = s_res['genotype_counts']
+            exp_dict = s_res['hwe']['expected_counts']
+            for gt in obs_dict.keys():
+                hwe_chart_rows.append({'Genotype': f"{snp_name} ({gt})", 'Category': 'Observed Count', 'Samples': obs_dict.get(gt, 0)})
+                hwe_chart_rows.append({'Genotype': f"{snp_name} ({gt})", 'Category': 'Expected Count (2Npq, Np^2, Nq^2)', 'Samples': exp_dict.get(gt, 0)})
+        fig_hwe = px.bar(pd.DataFrame(hwe_chart_rows), x='Genotype', y='Samples', color='Category', barmode='group', title="Observed vs Expected Genotype Frequencies under HWE")
+        st.plotly_chart(fig_hwe, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 7: GEOGRAPHIC POPULATION GROUPS
@@ -607,6 +626,14 @@ elif nav_option == "🌐 7. Geographic Population Groups":
             r_phenos = r_active.get('cyp2c19_summary', {}).get('phenotypes', {})
             p_list = [{'Phenotype': k, 'Count': v['count'], 'Percentage': f"{v['percentage']}%"} for k, v in r_phenos.items()]
             st.table(pd.DataFrame(p_list))
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Primary Visual: Regional Variant Allele Frequency Comparison")
+        cyp2_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0) for r in regions]
+        cyp17_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0) for r in regions]
+        reg_comp_df = pd.DataFrame({'Region': regions, 'CYP2C19*2 (Var A)': cyp2_freqs, 'CYP2C19*17 (Var T)': cyp17_freqs})
+        fig_reg = px.bar(reg_comp_df, x='Region', y=['CYP2C19*2 (Var A)', 'CYP2C19*17 (Var T)'], barmode='group', title="Variant Allele Frequencies across 5 Indian Geographic Regions")
+        st.plotly_chart(fig_reg, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 8: GENDER-WISE ANALYSIS
@@ -687,39 +714,20 @@ elif nav_option == "👫 8. Gender-Wise Analysis":
                 })
         st.dataframe(pd.DataFrame(g_rows), use_container_width=True)
         
-        # Gender Visualizations
-        st.markdown("### 📈 Visual Comparison: Male vs Female Cohorts")
-        gc1, gc2 = st.columns(2)
-        with gc1:
-            st.markdown("**CYP2C19*2 Genotype Breakdown by Gender**")
-            m_gc = male.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
-            f_gc = female.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
-            
-            gen_chart_df = pd.DataFrame([
-                {'Gender': 'Male', 'Genotype': 'GG', 'Count': m_gc.get('GG', 0)},
-                {'Gender': 'Male', 'Genotype': 'GA', 'Count': m_gc.get('GA', 0)},
-                {'Gender': 'Male', 'Genotype': 'AA', 'Count': m_gc.get('AA', 0)},
-                {'Gender': 'Female', 'Genotype': 'GG', 'Count': f_gc.get('GG', 0)},
-                {'Gender': 'Female', 'Genotype': 'GA', 'Count': f_gc.get('GA', 0)},
-                {'Gender': 'Female', 'Genotype': 'AA', 'Count': f_gc.get('AA', 0)}
-            ])
-            fig_g1 = px.bar(gen_chart_df, x='Genotype', y='Count', color='Gender', barmode='group', title="CYP2C19*2 Genotype Counts by Gender")
-            st.plotly_chart(fig_g1, use_container_width=True)
-            
-        with gc2:
-            st.markdown("**CPIC Phenotype Distributions by Gender**")
-            m_phenos = male.get('cyp2c19_summary', {}).get('phenotypes', {})
-            f_phenos = female.get('cyp2c19_summary', {}).get('phenotypes', {})
-            
-            pheno_chart_df = []
-            for p_name in PHENOTYPE_ORDER:
-                if p_name in m_phenos:
-                    pheno_chart_df.append({'Gender': 'Male', 'Phenotype': p_name.split(' (')[0], 'Count': m_phenos[p_name]['count']})
-                if p_name in f_phenos:
-                    pheno_chart_df.append({'Gender': 'Female', 'Phenotype': p_name.split(' (')[0], 'Count': f_phenos[p_name]['count']})
-                    
-            fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes by Gender")
-            st.plotly_chart(fig_g2, use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📈 Primary Visual: CPIC Metabolizer Phenotype Distributions by Gender")
+        m_phenos = male.get('cyp2c19_summary', {}).get('phenotypes', {})
+        f_phenos = female.get('cyp2c19_summary', {}).get('phenotypes', {})
+        
+        pheno_chart_df = []
+        for p_name in PHENOTYPE_ORDER:
+            if p_name in m_phenos:
+                pheno_chart_df.append({'Gender': 'Male', 'Phenotype': p_name.split(' (')[0], 'Count': m_phenos[p_name]['count']})
+            if p_name in f_phenos:
+                pheno_chart_df.append({'Gender': 'Female', 'Phenotype': p_name.split(' (')[0], 'Count': f_phenos[p_name]['count']})
+                
+        fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes Comparison (Male vs Female)")
+        st.plotly_chart(fig_g2, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 9: DEDICATED STATE-WISE PAGES
@@ -755,6 +763,13 @@ elif nav_option == "📍 9. Dedicated State-Wise Pages":
                 st.markdown(f"**State Phenotype Breakdown ({selected_st})**")
                 phenos = st_data.get('cyp2c19_summary', {}).get('phenotypes', {})
                 st.table(pd.DataFrame([{'Phenotype': k, 'Count': v['count'], 'Percentage': f"{v['percentage']}%"} for k, v in phenos.items()]))
+                
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(f"### 🍩 Primary Visual: CPIC Phenotype Breakdown for {selected_st}")
+            st_p_labels = [k.replace(' Metabolizer', '') for k, v in phenos.items() if v['count'] > 0]
+            st_p_vals = [v['count'] for k, v in phenos.items() if v['count'] > 0]
+            fig_st_pie = px.pie(names=st_p_labels, values=st_p_vals, hole=0.45, color_discrete_sequence=px.colors.qualitative.Pastel, title=f"Phenotype Distribution in {selected_st}")
+            st.plotly_chart(fig_st_pie, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 10: CYP2C19 CALLING & PHENOTYPES
@@ -774,6 +789,12 @@ elif nav_option == "💊 10. CYP2C19 Calling & Phenotypes":
         with cp2:
             st.markdown("### 🧬 Diplotype Call Matrix (*1/*1, *1/*2, *2/*17, etc.)")
             st.table(pd.DataFrame([{'Diplotype Call': k, 'Count': v['count'], 'Frequency': v['frequency'], 'Percentage': f"{v['percentage']}%"} for k, v in pgx['diplotypes'].items()]))
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Primary Visual: CYP2C19 Diplotype Frequency Matrix")
+        dip_chart_rows = [{'Diplotype': k, 'Frequency': v['frequency'], 'Count': v['count']} for k, v in pgx['diplotypes'].items() if v['count'] > 0]
+        fig_dip = px.bar(pd.DataFrame(dip_chart_rows), x='Frequency', y='Diplotype', orientation='h', title="Population Diplotype Frequency Matrix (*1/*1, *1/*2, *2/*17, etc.)", color='Frequency', color_continuous_scale='Viridis')
+        st.plotly_chart(fig_dip, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 11: LIVE PREVIEW & DOWNLOAD REPORT
