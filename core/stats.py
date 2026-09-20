@@ -87,6 +87,7 @@ class GeneticStatsEngine:
                 'allele_pcts': {ref_allele: 0.0, var_allele: 0.0},
                 'hwe': {
                     'expected_counts': {wt_gen: 0.0, het_gen: 0.0, var_gen: 0.0},
+                    'expected_freqs': {wt_gen: 0.0, het_gen: 0.0, var_gen: 0.0},
                     'chi2_stat': 0.0,
                     'df': 1,
                     'p_value': 1.0,
@@ -141,6 +142,7 @@ class GeneticStatsEngine:
             'allele_pcts': {ref_allele: round(p * 100, 2), var_allele: round(q * 100, 2)},
             'hwe': {
                 'expected_counts': {wt_gen: round(exp_wt, 2), het_gen: round(exp_het, 2), var_gen: round(exp_var, 2)},
+                'expected_freqs': {wt_gen: round(p ** 2, 4), het_gen: round(2 * p * q, 4), var_gen: round(q ** 2, 4)},
                 'chi2_stat': round(chi2_stat, 4),
                 'df': 1,
                 'p_value': round(p_val, 4),
