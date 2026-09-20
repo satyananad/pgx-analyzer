@@ -565,47 +565,38 @@ elif nav_option == "🌐 7. Geographic Population Groups":
         st.markdown("### 📊 Comprehensive Regional Statistical Summary Table (Matching Reference Excel)")
         st.caption("Includes exact allele counts, genotype counts, allele frequencies f(A)/f(G)/f(C)/f(T), expected counts, Chi-Square (\\\\chi^2), P-values, and HWE interpretations.")
         
-        # Detailed Reference Excel Matching Table
-        comp_rows = []
-        for r in regions:
-            r_data = reg.get(r, {})
-            snps = r_data.get('snps', {})
-            
-            cyp2 = snps.get('CYP2C19*2', {})
-            cyp17 = snps.get('CYP2C19*17', {})
-            
-            cyp2_ac = cyp2.get('allele_counts', {})
-            cyp2_af = cyp2.get('allele_freqs', {})
-            cyp2_gc = cyp2.get('genotype_counts', {})
-            cyp2_hwe = cyp2.get('hwe', {})
-            
-            cyp17_ac = cyp17.get('allele_counts', {})
-            cyp17_af = cyp17.get('allele_freqs', {})
-            cyp17_gc = cyp17.get('genotype_counts', {})
-            cyp17_hwe = cyp17.get('hwe', {})
+        # 1. Multi-Row Reference Excel Matrix Table
+        rows_def = [
+            ('A / C Count', lambda c2, c17: (c2.get('allele_counts', {}).get('A', 0), c17.get('allele_counts', {}).get('C', 0))),
+            ('G / T Count', lambda c2, c17: (c2.get('allele_counts', {}).get('G', 0), c17.get('allele_counts', {}).get('T', 0))),
+            ('Total Allele Count', lambda c2, c17: (sum(c2.get('allele_counts', {}).values()), sum(c17.get('allele_counts', {}).values()))),
+            ('GA COUNT / CC COUNT', lambda c2, c17: (c2.get('genotype_counts', {}).get('GA', 0), c17.get('genotype_counts', {}).get('CC', 0))),
+            ('AA COUNT / CT COUNT', lambda c2, c17: (c2.get('genotype_counts', {}).get('AA', 0), c17.get('genotype_counts', {}).get('CT', 0))),
+            ('GG COUNT / TT COUNT', lambda c2, c17: (c2.get('genotype_counts', {}).get('GG', 0), c17.get('genotype_counts', {}).get('TT', 0))),
+            ('Total Sample N', lambda c2, c17: (sum(c2.get('genotype_counts', {}).values()), sum(c17.get('genotype_counts', {}).values()))),
+            ('Allele Freq F(A) / F(C)', lambda c2, c17: (c2.get('allele_freqs', {}).get('A', 0), c17.get('allele_freqs', {}).get('C', 0))),
+            ('Allele Freq F(G) / f(T)', lambda c2, c17: (c2.get('allele_freqs', {}).get('G', 0), c17.get('allele_freqs', {}).get('T', 0))),
+            ('Expected GA / Expected CC', lambda c2, c17: (c2.get('hwe', {}).get('expected_counts', {}).get('GA', 0), c17.get('hwe', {}).get('expected_counts', {}).get('CC', 0))),
+            ('Expected GG / Expected CT', lambda c2, c17: (c2.get('hwe', {}).get('expected_counts', {}).get('GG', 0), c17.get('hwe', {}).get('expected_counts', {}).get('CT', 0))),
+            ('Expected AA / Expected TT', lambda c2, c17: (c2.get('hwe', {}).get('expected_counts', {}).get('AA', 0), c17.get('hwe', {}).get('expected_counts', {}).get('TT', 0))),
+            ('Chi Square (χ²)', lambda c2, c17: (c2.get('hwe', {}).get('chi2_stat', 0), c17.get('hwe', {}).get('chi2_stat', 0))),
+            ('P VALUE', lambda c2, c17: (c2.get('hwe', {}).get('p_value', 1.0), c17.get('hwe', {}).get('p_value', 1.0))),
+            ('HWE Status', lambda c2, c17: (c2.get('hwe', {}).get('interpretation', 'In HWE'), c17.get('hwe', {}).get('interpretation', 'In HWE')))
+        ]
 
-            comp_rows.append({
-                'Geographic Group': r,
-                'Sample N': r_data.get('sample_count', 0),
-                '*2 A Count': cyp2_ac.get('A', 0),
-                '*2 G Count': cyp2_ac.get('G', 0),
-                '*2 f(A)': cyp2_af.get('A', 0),
-                '*2 f(G)': cyp2_af.get('G', 0),
-                '*2 GA / AA / GG': f"{cyp2_gc.get('GA', 0)} / {cyp2_gc.get('AA', 0)} / {cyp2_gc.get('GG', 0)}",
-                '*2 Expected (GA/GG/AA)': f"{cyp2_hwe.get('expected_counts', {}).get('GA', 0)} / {cyp2_hwe.get('expected_counts', {}).get('GG', 0)} / {cyp2_hwe.get('expected_counts', {}).get('AA', 0)}",
-                '*2 Chi2 Stat': cyp2_hwe.get('chi2_stat', 0),
-                '*2 P-Value': cyp2_hwe.get('p_value', 1.0),
-                '*2 HWE Status': cyp2_hwe.get('interpretation', 'In HWE'),
-                '*17 C Count': cyp17_ac.get('C', 0),
-                '*17 T Count': cyp17_ac.get('T', 0),
-                '*17 f(C)': cyp17_af.get('C', 0),
-                '*17 f(T)': cyp17_af.get('T', 0),
-                '*17 CC / CT / TT': f"{cyp17_gc.get('CC', 0)} / {cyp17_gc.get('CT', 0)} / {cyp17_gc.get('TT', 0)}",
-                '*17 Chi2 Stat': cyp17_hwe.get('chi2_stat', 0),
-                '*17 P-Value': cyp17_hwe.get('p_value', 1.0)
-            })
-            
-        st.dataframe(pd.DataFrame(comp_rows), use_container_width=True)
+        matrix_data = []
+        for label, func in rows_def:
+            r_dict = {'Statistical Parameter': label}
+            for r in regions:
+                snps = reg.get(r, {}).get('snps', {})
+                c2 = snps.get('CYP2C19*2', {})
+                c17 = snps.get('CYP2C19*17', {})
+                v2, v17 = func(c2, c17)
+                r_dict[f'{r} (*2)'] = v2
+                r_dict[f'{r} (*17)'] = v17
+            matrix_data.append(r_dict)
+
+        st.dataframe(pd.DataFrame(matrix_data), use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### 🗺️ Individual Geographic Region Profiles & Separate Regional Visualizations")
