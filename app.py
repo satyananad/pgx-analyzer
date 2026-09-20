@@ -2,16 +2,17 @@
 Automated Population Pharmacogenomics Analysis Platform
 Comprehensive Multi-Page Streamlit SaaS Application
 
-Includes:
-1. Visual Welcome Landing Screen with Interactive Manual Data Entry Form & File Upload
-2. Automatic Geographical Classification across 5 Regions (South, North, East, West, Central India)
-3. Strict SNP Column Validation (CYP2C19*2 rs4244285, CYP2C19*3 rs4986893, CYP2C19*17 rs12248560)
+Full implementation of the 12-Section Specification:
+1. Title & Aim
+2. Input Data Normalization (CYP2C19*2 rs4244285, CYP2C19*3 rs4986893, CYP2C19*17 rs12248560)
+3. Visual Welcome Landing Screen with Interactive Manual Data Entry Form & File Upload
 4. Data Quality Control (QC) & Missing Values Audit
-5. Genotype & Allele Frequency Engine (p & q calculation)
+5. Genotype Counts & Allele Frequency Engine (p & q calculation)
 6. Hardy-Weinberg Equilibrium Engine (Chi2, P-Value, Haldane Exact Test)
-7. Dedicated State-Wise Analysis Pages (Individual State Profiles)
-8. CYP2C19 Star Allele, Diplotype Calling & CPIC Phenotype Classification (UM, RM, NM, IM, PM)
-9. Live Report Preview & Multi-Format Exporter (Excel, CSV, PDF)
+7. Geographic Population Groups (South India, North India, East India, West India, Central India)
+8. Dedicated State-Wise Analysis Pages (Individual State Profiles)
+9. CYP2C19 Star Allele, Diplotype Calling & CPIC Phenotype Classification (UM, RM, NM, IM, PM)
+10. Live Report Preview & Multi-Format Exporter (Excel, CSV, PDF)
 """
 
 import streamlit as st
@@ -509,7 +510,7 @@ elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
                 'Chi2 Stat (χ²)': hw['chi2_stat'],
                 'Chi2 P-Value': hw['p_value'],
                 'Exact Test P-Value': hw['exact_p_value'],
-                'HWE Interpretation': hw['interpretation']
+                'HWE Status': hw['interpretation']
             })
         st.table(pd.DataFrame(hwe_rows))
 
@@ -518,7 +519,7 @@ elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
 # -----------------------------------------------------------------------------
 elif nav_option == "🌐 7. Geographic Population Groups":
     st.markdown("## 🌐 Geographic Population Groups Analysis")
-    st.caption("Standard Population Stratification across South India, North India, East India, West India, and Central India")
+    st.caption("Complete Population Genetics & Statistical Analysis across South India, North India, East India, West India, and Central India")
     
     if full_results is not None:
         reg = full_results['regional']
@@ -541,30 +542,51 @@ elif nav_option == "🌐 7. Geographic Population Groups":
                 """, unsafe_allow_html=True)
                 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📊 Geographic Population Groups Comparison Matrix")
+        st.markdown("### 📊 Comprehensive Regional Statistical Summary Table (Matching Reference Excel)")
+        st.caption("Includes exact allele counts, genotype counts, allele frequencies f(A)/f(G)/f(C)/f(T), expected counts, Chi-Square (\\\\chi^2), P-values, and HWE interpretations.")
         
-        matrix_rows = []
+        # Detailed Reference Excel Matching Table
+        comp_rows = []
         for r in regions:
             r_data = reg.get(r, {})
             snps = r_data.get('snps', {})
-            cyp2 = snps.get('CYP2C19*2', {}).get('allele_freqs', {})
-            cyp3 = snps.get('CYP2C19*3', {}).get('allele_freqs', {})
-            cyp17 = snps.get('CYP2C19*17', {}).get('allele_freqs', {})
-            hwe = snps.get('CYP2C19*2', {}).get('hwe', {})
-            pm_pct = r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
             
-            matrix_rows.append({
+            cyp2 = snps.get('CYP2C19*2', {})
+            cyp17 = snps.get('CYP2C19*17', {})
+            
+            cyp2_ac = cyp2.get('allele_counts', {})
+            cyp2_af = cyp2.get('allele_freqs', {})
+            cyp2_gc = cyp2.get('genotype_counts', {})
+            cyp2_hwe = cyp2.get('hwe', {})
+            
+            cyp17_ac = cyp17.get('allele_counts', {})
+            cyp17_af = cyp17.get('allele_freqs', {})
+            cyp17_gc = cyp17.get('genotype_counts', {})
+            cyp17_hwe = cyp17.get('hwe', {})
+
+            comp_rows.append({
                 'Geographic Group': r,
-                'Sample Count (N)': r_data.get('sample_count', 0),
-                'Missing Rate (%)': f"{r_data.get('missing_pct', 0)}%",
-                'CYP2C19*2 (G / A)': f"G: {cyp2.get('G', 0)} · A: {cyp2.get('A', 0)}",
-                'CYP2C19*3 (G / A)': f"G: {cyp3.get('G', 0)} · A: {cyp3.get('A', 0)}",
-                'CYP2C19*17 (C / T)': f"C: {cyp17.get('C', 0)} · T: {cyp17.get('T', 0)}",
-                'HWE Status (*2)': hwe.get('interpretation', 'In HWE'),
-                'Poor Metabolizers (%)': f"{pm_pct}%"
+                'Sample N': r_data.get('sample_count', 0),
+                '*2 A Count': cyp2_ac.get('A', 0),
+                '*2 G Count': cyp2_ac.get('G', 0),
+                '*2 f(A)': cyp2_af.get('A', 0),
+                '*2 f(G)': cyp2_af.get('G', 0),
+                '*2 GA / AA / GG': f"{cyp2_gc.get('GA', 0)} / {cyp2_gc.get('AA', 0)} / {cyp2_gc.get('GG', 0)}",
+                '*2 Expected (GA/GG/AA)': f"{cyp2_hwe.get('expected_counts', {}).get('GA', 0)} / {cyp2_hwe.get('expected_counts', {}).get('GG', 0)} / {cyp2_hwe.get('expected_counts', {}).get('AA', 0)}",
+                '*2 Chi2 Stat': cyp2_hwe.get('chi2_stat', 0),
+                '*2 P-Value': cyp2_hwe.get('p_value', 1.0),
+                '*2 HWE Status': cyp2_hwe.get('interpretation', 'In HWE'),
+                '*17 C Count': cyp17_ac.get('C', 0),
+                '*17 T Count': cyp17_ac.get('T', 0),
+                '*17 f(C)': cyp17_af.get('C', 0),
+                '*17 f(T)': cyp17_af.get('T', 0),
+                '*17 CC / CT / TT': f"{cyp17_gc.get('CC', 0)} / {cyp17_gc.get('CT', 0)} / {cyp17_gc.get('TT', 0)}",
+                '*17 Chi2 Stat': cyp17_hwe.get('chi2_stat', 0),
+                '*17 P-Value': cyp17_hwe.get('p_value', 1.0)
             })
-        st.table(pd.DataFrame(matrix_rows))
-        
+            
+        st.dataframe(pd.DataFrame(comp_rows), use_container_width=True)
+
         st.markdown("### 🗺️ Select Active Region Profile")
         sel_reg = st.radio("Choose Region Profile:", regions, horizontal=True)
         r_active = reg.get(sel_reg, {})
