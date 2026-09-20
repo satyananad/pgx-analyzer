@@ -1,18 +1,17 @@
 """
 Automated Population Pharmacogenomics Analysis Platform
-Comprehensive Multi-Page Streamlit Application
+Comprehensive Multi-Page Streamlit SaaS Application
 
-Full implementation of the 12-Section Specification:
-1. Title & Aim
-2. Input Data Normalization (CYP2C19*2 rs4244285, CYP2C19*3 rs4986893, CYP2C19*17 rs12248560)
-3. Visual Welcome Landing Screen with Incremental Dataset Batch Insertion
+Includes:
+1. Visual Welcome Landing Screen with Interactive Manual Data Entry Form & File Upload
+2. Automatic Geographical Classification across 5 Regions (South, North, East, West, Central India)
+3. Strict SNP Column Validation (CYP2C19*2 rs4244285, CYP2C19*3 rs4986893, CYP2C19*17 rs12248560)
 4. Data Quality Control (QC) & Missing Values Audit
-5. Genotype Counts & Allele Frequency Engine (p & q calculation)
+5. Genotype & Allele Frequency Engine (p & q calculation)
 6. Hardy-Weinberg Equilibrium Engine (Chi2, P-Value, Haldane Exact Test)
-7. Geographic Population Groups (South India, North India, East India, West India, Central India)
-8. Dedicated State-Wise Analysis Pages (Individual State Profiles)
-9. CYP2C19 Star Allele, Diplotype Calling & CPIC Phenotype Classification (UM, RM, NM, IM, PM)
-10. Live Report Preview & Multi-Format Exporter (Excel, CSV, PDF)
+7. Dedicated State-Wise Analysis Pages (Individual State Profiles)
+8. CYP2C19 Star Allele, Diplotype Calling & CPIC Phenotype Classification (UM, RM, NM, IM, PM)
+9. Live Report Preview & Multi-Format Exporter (Excel, CSV, PDF)
 """
 
 import streamlit as st
@@ -28,7 +27,7 @@ from core.stats import GeneticStatsEngine
 from core.cyp2c19 import CYP2C19Translator
 from database.db_manager import DatabaseManager
 from reports.report_generator import ReportGenerator
-from config import SNP_CONFIG, PHENOTYPE_ORDER
+from config import SNP_CONFIG, PHENOTYPE_ORDER, STATE_TO_REGION
 
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIG & CUSTOM CSS
@@ -66,7 +65,7 @@ CUSTOM_CSS = """
         color: #FFFFFF;
     }
     .hero-subtitle {
-        font-size: 1.05rem;
+        font-size: 1.02rem;
         color: #CBD5E1;
         margin-bottom: 1.2rem;
         line-height: 1.6;
@@ -95,7 +94,7 @@ CUSTOM_CSS = """
         font-size: 0.9rem;
     }
 
-    /* New Data Batch Feature Callout Box */
+    /* Feature Callout Box */
     .feature-callout-box {
         background-color: #F0FDF4;
         border: 1.5px solid #86EFAC;
@@ -110,13 +109,23 @@ CUSTOM_CSS = """
         margin-bottom: 0.5rem;
     }
     .feature-callout-list {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         color: #15803D;
         line-height: 1.6;
         margin-left: 1.2rem;
     }
 
-    /* Metric Card Grid */
+    /* Form Container */
+    .form-card {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #CBD5E1;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Metric Cards */
     .kpi-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -137,16 +146,6 @@ CUSTOM_CSS = """
         letter-spacing: 0.05em;
         margin-top: 0.2rem;
     }
-
-    /* Section Cards */
-    .card-box {
-        background-color: #FFFFFF;
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid #E2E8F0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem;
-    }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -157,7 +156,6 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
 
-# Workspace demo file path
 demo_file_path = "categorized by state into North, South, East, West .xlsx"
 if st.session_state['uploaded_df'] is None and os.path.exists(demo_file_path):
     st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
@@ -178,7 +176,7 @@ with st.sidebar:
     nav_option = st.radio(
         "Navigation Menu:",
         [
-            "🏠 1. Welcome & Data Insertion",
+            "🏠 1. Welcome & Data Entry",
             "📂 2. Upload & Map Columns",
             "📊 3. Executive Dashboard",
             "🛡️ 4. Data Quality & Missing Audit",
@@ -200,7 +198,7 @@ with st.sidebar:
             st.success("Loaded workspace dataset!")
             st.rerun()
 
-# Execute Pipeline Analysis
+# Run Pipeline Analysis
 df_raw = st.session_state['uploaded_df']
 clean_df = None
 qc_report = None
@@ -218,9 +216,9 @@ if df_raw is not None:
         pass
 
 # -----------------------------------------------------------------------------
-# VIEW 1: WELCOME & DATA INSERTION SCREEN
+# VIEW 1: WELCOME & INTERACTIVE DATA ENTRY SCREEN
 # -----------------------------------------------------------------------------
-if nav_option == "🏠 1. Welcome & Data Insertion":
+if nav_option == "🏠 1. Welcome & Data Entry":
     st.markdown("""
     <div class="hero-banner">
         <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
@@ -228,7 +226,7 @@ if nav_option == "🏠 1. Welcome & Data Insertion":
             Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
         </div>
         <div class="pipeline-container">
-            <span class="pipeline-step">1. Excel Upload</span> <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">1. Excel / Manual Entry</span> <span class="pipeline-arrow">➔</span>
             <span class="pipeline-step">2. Data QC Audit</span> <span class="pipeline-arrow">➔</span>
             <span class="pipeline-step">3. Genotype Normalization</span> <span class="pipeline-arrow">➔</span>
             <span class="pipeline-step">4. Allele Freq (p & q)</span> <span class="pipeline-arrow">➔</span>
@@ -244,31 +242,30 @@ if nav_option == "🏠 1. Welcome & Data Insertion":
     </div>
     """, unsafe_allow_html=True)
     
-    # Feature Callout Box as requested in spec
     st.markdown("""
     <div class="feature-callout-box">
-        <div class="feature-callout-title">✨ Scalable Data Insertion & Incremental Batch Processing</div>
-        <div style="font-size: 0.9rem; color: #166534; margin-bottom: 0.5rem;">
-            New datasets can be uploaded and incorporated into the existing workspace with:
+        <div class="feature-callout-title">✨ Continuous Incremental Sample Insertion & Auto-Validation</div>
+        <div style="font-size: 0.9rem; color: #166534; margin-bottom: 0.4rem;">
+            New data can be uploaded via Excel or entered manually with automatic validation:
         </div>
         <ul class="feature-callout-list">
-            <li><strong>Duplicate checking:</strong> Automatic cross-check against historical sample IDs.</li>
-            <li><strong>Automatic validation:</strong> Instant genotype format cleaning (GA, GG, CC, AA, CT, TT, etc.).</li>
+            <li><strong>Duplicate checking:</strong> Automatic cross-check against existing sample IDs.</li>
+            <li><strong>Automatic validation:</strong> Strict genotype checking preventing wrong entries (CYP2C19*2: GG/GA/AA, CYP2C19*3: GG/GA/AA, CYP2C19*17: CC/CT/TT).</li>
             <li><strong>Automatic recalculation:</strong> Real-time update of allele frequencies ($p$ & $q$) and HWE statistics.</li>
-            <li><strong>Updated population statistics:</strong> Stratified analysis across 5 Indian Geographic Population Groups.</li>
+            <li><strong>Updated population statistics:</strong> Geographic stratification across South, North, East, West, and Central India.</li>
             <li><strong>Updated diplotype and phenotype distributions:</strong> CPIC metabolizer calls (UM, RM, NM, IM, PM).</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
 
-    col_w1, col_w2 = st.columns([2, 1])
+    col_w1, col_w2 = st.columns([1.5, 1])
     
     with col_w1:
-        st.markdown("### 📥 Insert / Upload New Genotype Dataset")
+        st.markdown("### 📥 Option A: File Upload (.xlsx, .xls, .csv)")
         file_upload = st.file_uploader(
-            "Upload Excel (.xlsx, .xls) or CSV file with Sample ID, Gender, DOB, State/Native Place, and CYP2C19 genotypes",
+            "Upload Excel or CSV file containing Sample ID, Gender, DOB, State/Native Place, and CYP2C19 genotypes",
             type=["xlsx", "xls", "csv"],
-            key="welcome_uploader"
+            key="welcome_file_uploader"
         )
         if file_upload is not None:
             try:
@@ -282,29 +279,76 @@ if nav_option == "🏠 1. Welcome & Data Insertion":
             except Exception as e:
                 st.error(f"Upload error: {e}")
                 
-        if os.path.exists(demo_file_path):
-            if st.button("🚀 Load Workspace Dataset (1,044 Samples)", use_container_width=True, type="primary"):
-                st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-                st.success("Loaded workspace dataset!")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### ✍️ Option B: Add Single Sample Entry Manually")
+        
+        with st.form("manual_sample_entry_form", clear_on_submit=True):
+            st.caption("Fields marked * are required for statistical calculation.")
+            
+            fm1, fm2, fm3 = st.columns(3)
+            in_sid = fm1.text_input("Sample ID *", value=f"NEW_{len(df_raw)+1 if df_raw is not None else 1:04d}")
+            in_gender = fm2.selectbox("Gender", ["Male", "Female", "Unknown"])
+            in_dob = fm3.text_input("Date of Birth", value="1995-01-01")
+            
+            fm4, fm5, fm6 = st.columns(3)
+            in_state = fm4.selectbox("State *", sorted(list(STATE_TO_REGION.keys())))
+            in_native = fm5.text_input("Native place", value="")
+            in_3gen = fm6.selectbox("Family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
+            
+            st.markdown("##### CYP2C19 Target Genotypes")
+            fg1, fg2, fg3 = st.columns(3)
+            in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GG", "GA", "AA", "Missing"])
+            in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "GA", "AA", "Missing"])
+            in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing"])
+            
+            submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
+            
+            if submit_sample:
+                new_row = {
+                    'sample ID': in_sid,
+                    'Gender': in_gender,
+                    'Date of Birth': in_dob,
+                    'Native place ': in_native,
+                    'State': in_state,
+                    'Test requested': 'CYP2C19 Genotyping',
+                    'Is their family lived at Native place for past 3 generations?': in_3gen,
+                    'CYP2C19*2 (rs4244285)': np.nan if in_cyp2 == "Missing" else in_cyp2,
+                    'CYP2C19*3 (rs4986893)': np.nan if in_cyp3 == "Missing" else in_cyp3,
+                    'CYP2C19*17 ( rs12248560)': np.nan if in_cyp17 == "Missing" else in_cyp17
+                }
+                
+                if st.session_state['uploaded_df'] is not None:
+                    st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
+                else:
+                    st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+                    
+                st.success(f"Sample {in_sid} added successfully! Statistics recalculated across all geographic groups.")
                 st.rerun()
 
     with col_w2:
-        st.markdown("""
-        <div class="card-box">
-            <h4>📊 Current Dataset Summary</h4>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### 📊 Current Cohort Statistics")
         if full_results is not None:
             st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
             st.metric("Geographic Groups Covered", "South, North, East, West, Central India")
             st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 📄 Quick Export")
+            excel_bytes = ReportGenerator.export_to_excel(full_results)
+            st.download_button(
+                "⬇ Download Full Excel Report (.xlsx)",
+                data=excel_bytes,
+                file_name="PGx_Population_Report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
 
 # -----------------------------------------------------------------------------
 # VIEW 2: UPLOAD & MAP COLUMNS
 # -----------------------------------------------------------------------------
 elif nav_option == "📂 2. Upload & Map Columns":
     st.markdown("## 📂 Upload Genotype Dataset & Map Columns")
-    st.caption("Auto-mapping for headers: sample ID, Gender, Date of Birth, Native place, State, Test requested, CYP2C19*2 (rs4244285), CYP2C19*3 (rs4986893), CYP2C19*17 (rs12248560).")
+    st.caption("Auto-mapping headers: sample ID, Gender, Date of Birth, Native place, State, Test requested, CYP2C19*2 (rs4244285), CYP2C19*3 (rs4986893), CYP2C19*17 (rs12248560).")
     
     file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="map_uploader")
     if file_upload is not None:
