@@ -348,9 +348,11 @@ if nav_option == "🏠 1. Welcome & Data Entry":
 # -----------------------------------------------------------------------------
 # VIEW 2: UPLOAD & MAP COLUMNS
 # -----------------------------------------------------------------------------
+# VIEW 2: UPLOAD & MAP COLUMNS (MATCHING SCREENSHOT 1)
+# -----------------------------------------------------------------------------
 elif nav_option == "📂 2. Upload & Map Columns":
-    st.markdown("## 📂 Upload Genotype Dataset & Map Columns")
-    st.caption("Auto-mapping headers: sample ID, Gender, Date of Birth, Native place, State, Test requested, CYP2C19*2 (rs4244285), CYP2C19*3 (rs4986893), CYP2C19*17 (rs12248560).")
+    st.markdown("## Map your columns")
+    st.caption(f"Tell the analyzer which columns hold which field. Detected {len(df_raw.columns) if df_raw is not None else 0} columns, {len(df_raw):,} rows.")
     
     file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="map_uploader")
     if file_upload is not None:
@@ -366,7 +368,6 @@ elif nav_option == "📂 2. Upload & Map Columns":
             st.error(f"Error loading file: {e}")
 
     if df_raw is not None:
-        st.markdown("### 🛠️ Detected Headers & Mapping Verification")
         all_cols = list(df_raw.columns)
         
         def find_default(patterns, cols):
@@ -381,19 +382,49 @@ elif nav_option == "📂 2. Upload & Map Columns":
         gender_def = find_default(['gender', 'sex'], all_cols)
         region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
         
-        col_m1.selectbox("Sample ID Column", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
-        col_m2.selectbox("Gender Column", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
-        col_m3.selectbox("Region / State Column", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
+        col_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
+        col_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
+        col_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
         
-        st.markdown("#### Target Variant Header Mapping")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### CYP2C19 SNP columns")
+        st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3), and rs12248560 (*17).")
+        
+        # SNP Box 1: rs4244285 (*2)
+        st.markdown("""
+        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+            <h5 style="margin-top: 0; color: #0F172A;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        c1_1, c1_2, c1_3 = st.columns(3)
         cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
-        cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
-        cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
+        c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="snp2_col")
+        c1_2.text_input("Reference allele (*2)", value="G", key="ref_2")
+        c1_3.text_input("Variant allele (*2)", value="A", key="var_2")
         
-        c1, c2, c3 = st.columns(3)
-        c1.selectbox("CYP2C19*2 Column (rs4244285)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0)
-        c2.selectbox("CYP2C19*3 Column (rs4986893)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0)
-        c3.selectbox("CYP2C19*17 Column (rs12248560)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0)
+        # SNP Box 2: rs4986893 (*3)
+        st.markdown("""
+        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+            <h5 style="margin-top: 0; color: #0F172A;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        c2_1, c2_2, c2_3 = st.columns(3)
+        cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
+        c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="snp3_col")
+        c2_2.text_input("Reference allele (*3)", value="G", key="ref_3")
+        c2_3.text_input("Variant allele (*3)", value="A", key="var_3")
+        
+        # SNP Box 3: rs12248560 (*17)
+        st.markdown("""
+        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+            <h5 style="margin-top: 0; color: #0F172A;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        c3_1, c3_2, c3_3 = st.columns(3)
+        cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
+        c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="snp17_col")
+        c3_2.text_input("Reference allele (*17)", value="C", key="ref_17")
+        c3_3.text_input("Variant allele (*17)", value="T", key="var_17")
 
 # -----------------------------------------------------------------------------
 # VIEW 3: EXECUTIVE DASHBOARD
@@ -463,39 +494,98 @@ elif nav_option == "🛡️ 4. Data Quality & Missing Audit":
 # -----------------------------------------------------------------------------
 elif nav_option == "🧬 5. Genotype & Allele Frequencies":
     st.markdown("## 🧬 Genotype Counts & Allele Frequencies Engine")
-    st.caption("Exact Genotype Distribution, Allele Frequencies (p & q), and Percentages per Variant.")
+    st.caption("Exact Genotype Distribution, Zygosity (Homogenous vs Heterogenous), Allele Frequencies (p & q), and Percentages per Variant.")
     
     if full_results is not None:
-        snps_data = full_results['overall']['snps']
+        # Sub-cohort Filter Pills (Matching Screenshots 3, 4, 5)
+        st.markdown("### 🔍 Select Sub-Cohort Filter Profile")
+        cohort_dict = {
+            'Overall': full_results.get('overall', {}),
+            'South India': full_results.get('regional', {}).get('South India', {}),
+            'North India': full_results.get('regional', {}).get('North India', {}),
+            'East India': full_results.get('regional', {}).get('East India', {}),
+            'West India': full_results.get('regional', {}).get('West India', {}),
+            'Central India': full_results.get('regional', {}).get('Central India', {}),
+            'Female': full_results.get('gender', {}).get('Female', {}),
+            'Male': full_results.get('gender', {}).get('Male', {})
+        }
         
+        cohort_labels = [f"{k} (n={v.get('sample_count', 0)})" for k, v in cohort_dict.items() if v]
+        sel_pill = st.radio("Choose Sub-Cohort Filter:", cohort_labels, horizontal=True)
+        sel_key = sel_pill.split(' (')[0]
+        sel_cohort_data = cohort_dict.get(sel_key, full_results['overall'])
+        
+        snps_data = sel_cohort_data.get('snps', {})
+        
+        # Zygosity classification helper
+        def get_zygosity(gt_name, snp_name):
+            snp_conf = SNP_CONFIG.get(snp_name, {})
+            wt = snp_conf.get('wildtype_genotype', '')
+            het = snp_conf.get('het_genotype', '')
+            var = snp_conf.get('hom_var_genotype', '')
+            if gt_name == wt:
+                return "Homozygous Wildtype (Homogenous)"
+            elif gt_name in [het, het[::-1]]:
+                return "Heterozygote (Heterogenous)"
+            elif gt_name == var:
+                return "Homozygous Variant (Homogenous)"
+            return "Genotype Call"
+
+        # Allele classification helper
+        def get_allele_type(al_name, snp_name):
+            snp_conf = SNP_CONFIG.get(snp_name, {})
+            ref = snp_conf.get('ref_allele', '')
+            var = snp_conf.get('var_allele', '')
+            if al_name == ref:
+                return "Reference Allele"
+            elif al_name == var:
+                return "Variant Allele"
+            return "Allele Call"
+
         for snp_name, s_res in snps_data.items():
-            st.markdown(f"### {snp_name} ({SNP_CONFIG[snp_name]['rsid']})")
+            snp_conf = SNP_CONFIG.get(snp_name, {})
+            rsid = snp_conf.get('rsid', '')
+            st.markdown(f"### {rsid} ({snp_name}) — {sel_key} Cohort")
+            st.caption(f"Valid: {s_res.get('valid_samples', 0):,} | Missing: 0 | Invalid calls: 0")
             
-            c_g, c_a = st.columns(2)
-            with c_g:
-                st.markdown("**Genotype Counts & Frequencies**")
+            c_tables, c_chart = st.columns([1.2, 1.0])
+            with c_tables:
+                st.markdown("**Genotype Distribution & Zygosity (Homogenous vs Heterogenous)**")
                 g_c = s_res['genotype_counts']
                 g_p = s_res['genotype_pcts']
                 g_f = s_res['genotype_freqs']
-                gt_df = pd.DataFrame([{'Genotype': k, 'Count': v, 'Frequency': g_f.get(k, 0), 'Percentage': f"{g_p.get(k, 0)}%"} for k, v in g_c.items()])
-                st.table(gt_df)
                 
-            with c_a:
-                st.markdown("**Allele Counts & Frequencies (p & q)**")
+                gt_rows = []
+                for k, v in g_c.items():
+                    gt_rows.append({
+                        'GENOTYPE': k,
+                        'ZYGOSITY CLASSIFICATION': get_zygosity(k, snp_name),
+                        'COUNT': v,
+                        'FREQUENCY': g_f.get(k, 0),
+                        'PERCENTAGE': f"{g_p.get(k, 0)}%"
+                    })
+                st.table(pd.DataFrame(gt_rows))
+                
+                st.markdown("**Allele Distribution (Reference vs Variant)**")
                 a_c = s_res['allele_counts']
                 a_p = s_res['allele_pcts']
                 a_f = s_res['allele_freqs']
-                al_df = pd.DataFrame([{'Allele': k, 'Count': v, 'Frequency (p/q)': a_f.get(k, 0), 'Percentage': f"{a_p.get(k, 0)}%"} for k, v in a_c.items()])
-                st.table(al_df)
                 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📊 Primary Visual: Allele Frequency Distribution (p & q) Across Target SNPs")
-        af_chart_rows = []
-        for snp_name, s_res in snps_data.items():
-            for al, val in s_res['allele_freqs'].items():
-                af_chart_rows.append({'SNP Variant': snp_name, 'Allele': f"Allele {al}", 'Frequency (p/q)': val})
-        fig_af = px.bar(pd.DataFrame(af_chart_rows), x='SNP Variant', y='Frequency (p/q)', color='Allele', barmode='group', title="Allele Frequency (p & q) Comparison")
-        st.plotly_chart(fig_af, use_container_width=True)
+                al_rows = []
+                for k, v in a_c.items():
+                    al_rows.append({
+                        'ALLELE': k,
+                        'ALLELE TYPE': get_allele_type(k, snp_name),
+                        'COUNT': v,
+                        'FREQUENCY': f"{a_p.get(k, 0)}%"
+                    })
+                st.table(pd.DataFrame(al_rows))
+                
+            with c_chart:
+                st.markdown("**Genotype Distribution Visual**")
+                chart_df = pd.DataFrame([{'Genotype': k, 'Count': v} for k, v in g_c.items()])
+                fig_g = px.bar(chart_df, x='Genotype', y='Count', title=f"{snp_name} Genotype Counts ({sel_key})", color='Genotype', color_discrete_sequence=px.colors.qualitative.Dark24)
+                st.plotly_chart(fig_g, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 6: HARDY-WEINBERG EQUILIBRIUM
