@@ -151,8 +151,8 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # -----------------------------------------------------------------------------
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
-if 'wizard_step' not in st.session_state:
-    st.session_state['wizard_step'] = 1
+if 'mapped_cols' not in st.session_state:
+    st.session_state['mapped_cols'] = {}
 
 demo_file_path = "categorized by state into North, South, East, West .xlsx"
 if st.session_state['uploaded_df'] is None and os.path.exists(demo_file_path):
@@ -162,7 +162,7 @@ db_manager = DatabaseManager()
 existing_sample_ids = db_manager.get_existing_sample_ids()
 
 # -----------------------------------------------------------------------------
-# 3. SIDEBAR NAVIGATION MENU (CLEAN 11-PAGE NAVIGATION)
+# 3. SIDEBAR NAVIGATION MENU (CLEAN 10-PAGE NON-DUPLICATED NAVIGATION)
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=64)
@@ -174,17 +174,16 @@ with st.sidebar:
     nav_option = st.radio(
         "Navigation Menu:",
         [
-            "🏠 1. Welcome & Data Entry",
-            "📂 2. Upload & Map Columns",
-            "📊 3. Executive Dashboard",
-            "🛡️ 4. Data Quality & Missing Audit",
-            "🧬 5. Genotype & Allele Frequencies",
-            "⚖️ 6. Hardy-Weinberg Equilibrium",
-            "🌐 7. Geographic Population Groups",
-            "👫 8. Gender-Wise Analysis",
-            "📍 9. Dedicated State-Wise Pages",
-            "💊 10. CYP2C19 Calling & Phenotypes",
-            "📄 11. Live Preview & Download Report"
+            "🏠 1. Data Entry, Upload & Column Mapping",
+            "📊 2. Executive Dashboard",
+            "🛡️ 3. Data Quality & Missing Audit",
+            "🧬 4. Genotype & Allele Frequencies",
+            "⚖️ 5. Hardy-Weinberg Equilibrium",
+            "🌐 6. Geographic Population Groups",
+            "👫 7. Gender-Wise Analysis",
+            "📍 8. Dedicated State-Wise Pages",
+            "💊 9. CYP2C19 Calling & Phenotypes",
+            "📄 10. Live Preview & Download Report"
         ],
         index=0
     )
@@ -194,7 +193,7 @@ with st.sidebar:
     if os.path.exists(demo_file_path):
         if st.button("🔄 Reload Workspace Dataset (1,044 Samples)", use_container_width=True):
             st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-            st.session_state['wizard_step'] = 1
+            st.session_state['mapped_cols'] = {}
             st.success("Loaded workspace dataset!")
             st.rerun()
 
@@ -206,7 +205,7 @@ full_results = None
 processed_df = None
 
 if df_raw is not None:
-    qc_engine = DataQCEngine(df_raw, existing_sample_ids=existing_sample_ids)
+    qc_engine = DataQCEngine(df_raw, existing_sample_ids=existing_sample_ids, custom_col_mapping=st.session_state['mapped_cols'])
     clean_df, qc_report = qc_engine.run_qc()
     full_results = DemographicStratifier.stratify_and_analyze(clean_df)
     processed_df = full_results['processed_dataframe']
@@ -253,7 +252,7 @@ def render_unified_results(full_results: dict, qc_report: dict):
         for snp, samples in invalid_log.items():
             s_list = [f"{item['sample_id']} ('{item['raw_value']}')" for item in samples[:5]]
             inv_details.append(f"{snp}: {', '.join(s_list)}")
-        st.warning(f"⚠️ **Warning: {invalid_count} Invalid Genotype Call(s) Detected!** Invalid calls fail biological validation (e.g. wrong alleles for variant) and are quarantined from analysis. Details: {'; '.join(inv_details)}")
+        st.warning(f"⚠️ **Warning: {invalid_count} Invalid Genotype Call(s) Detected!** Invalid calls fail biological validation (e.g. non-GG in CYP2C19*3 or wrong alleles) and are quarantined from analysis. Details: {'; '.join(inv_details)}")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -416,209 +415,183 @@ def render_unified_results(full_results: dict, qc_report: dict):
             fig_donut.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
             st.plotly_chart(fig_donut, use_container_width=True)
 
-# Helper function to render step wizard top bar (Matching Image media_1789937076505.jpg)
-def render_step_wizard_bar(current_step):
-    c1, c2, c3 = st.columns(3)
-    
-    style1 = "background: #166534; color: white;" if current_step == 1 else "background: #E2E8F0; color: #334155;"
-    style2 = "background: #166534; color: white;" if current_step == 2 else "background: #E2E8F0; color: #334155;"
-    style3 = "background: #166534; color: white;" if current_step == 3 else "background: #E2E8F0; color: #334155;"
-    
-    if c1.button("1 - Upload", use_container_width=True):
-        st.session_state['wizard_step'] = 1
-        st.rerun()
-    if c2.button("2 - Map columns", use_container_width=True):
-        st.session_state['wizard_step'] = 2
-        st.rerun()
-    if c3.button("3 - Results", use_container_width=True):
-        st.session_state['wizard_step'] = 3
-        st.rerun()
-
 # -----------------------------------------------------------------------------
-# VIEW 1: WELCOME & STEP-WISE WIZARD FLOW
+# VIEW 1: SINGLE CONSOLIDATED DATA ENTRY, UPLOAD & COLUMN MAPPING PAGE
 # -----------------------------------------------------------------------------
-if nav_option in ["🏠 1. Welcome & Data Entry", "📂 2. Upload & Map Columns", "📊 3. Executive Dashboard"]:
-    # Sync navigation option to step if user clicks directly from sidebar
-    if nav_option == "📂 2. Upload & Map Columns" and st.session_state['wizard_step'] != 2:
-        st.session_state['wizard_step'] = 2
-    elif nav_option == "📊 3. Executive Dashboard" and st.session_state['wizard_step'] != 3:
-        st.session_state['wizard_step'] = 3
+if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
+    st.markdown("""
+    <div class="hero-banner">
+        <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
+        <div class="hero-subtitle">
+            Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    current_step = st.session_state['wizard_step']
-    render_step_wizard_bar(current_step)
-    
-    # -------------------------------------------------------------------------
-    # STEP 1: UPLOAD & DATA ENTRY
-    # -------------------------------------------------------------------------
-    if current_step == 1:
+    col_top1, col_top2 = st.columns([1.2, 0.8])
+    with col_top1:
+        st.markdown("### 📂 Upload Dataset File")
+        file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="single_entry_uploader")
+        if file_upload is not None:
+            try:
+                if file_upload.name.endswith('.csv'):
+                    df_load = pd.read_csv(file_upload)
+                else:
+                    df_load = pd.read_excel(file_upload)
+                st.session_state['uploaded_df'] = df_load
+                st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error loading file: {e}")
+
+    with col_top2:
+        st.markdown("### 📊 Dataset Status")
+        if full_results is not None:
+            st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
+            st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
+            st.info("💡 Data uploaded is mapped and analyzed automatically.")
+
+    st.divider()
+
+    # SECTION 2: MAP COLUMNS (Matching image media_1789937760866.png)
+    st.markdown("## 📂 Map your columns")
+    num_cols = len(df_raw.columns) if df_raw is not None else 0
+    num_rows = len(df_raw) if df_raw is not None else 0
+    st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
+
+    if df_raw is not None:
+        all_cols = list(df_raw.columns)
+        
+        def find_default(patterns, cols):
+            for pattern in patterns:
+                for c in cols:
+                    if pattern.lower() in str(c).lower():
+                        return c
+            return cols[0] if cols else ""
+
+        col_m1, col_m2, col_m3 = st.columns(3)
+        sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
+        gender_def = find_default(['gender', 'sex'], all_cols)
+        region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
+        
+        sel_sid = col_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
+        sel_gen = col_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
+        sel_reg = col_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### CYP2C19 SNP columns")
+        st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
+        
+        # SNP Box 1: rs4244285 (*2)
         st.markdown("""
-        <div class="hero-banner">
-            <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
-            <div class="hero-subtitle">
-                Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
-            </div>
+        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+            <h5 style="margin-top: 0; color: #0F172A;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
         </div>
         """, unsafe_allow_html=True)
+        c1_1, c1_2, c1_3 = st.columns(3)
+        cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
+        sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="snp2_col")
+        c1_2.text_input("Reference allele (*2)", value="G", key="ref_2")
+        c1_3.text_input("Variant allele (*2)", value="A", key="var_2")
         
-        col_w1, col_w2 = st.columns([1.2, 0.8])
-        with col_w1:
-            st.markdown("### 📂 Upload Dataset File")
-            file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="step1_uploader")
-            if file_upload is not None:
-                try:
-                    if file_upload.name.endswith('.csv'):
-                        df_load = pd.read_csv(file_upload)
-                    else:
-                        df_load = pd.read_excel(file_upload)
-                    st.session_state['uploaded_df'] = df_load
-                    st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
-                    st.session_state['wizard_step'] = 2
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error loading file: {e}")
-
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### ➕ Manual Sample Data Entry Form")
-            with st.form("manual_sample_form", clear_on_submit=True):
-                f_c1, f_c2 = st.columns(2)
-                in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
-                in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
-                
-                f_c3, f_c4 = st.columns(2)
-                in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
-                in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
-                
-                in_native = st.text_input("Native Place (City / District)", value=in_state)
-                in_3gen = st.selectbox("Family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
-                
-                st.markdown("##### CYP2C19 Target Genotypes")
-                fg1, fg2, fg3 = st.columns(3)
-                in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid)"])
-                in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "GA", "AA", "Missing", "TT (Invalid)"])
-                in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid)"])
-                
-                submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
-                
-                if submit_sample:
-                    new_row = {
-                        'sample ID': in_sid,
-                        'Gender': in_gender,
-                        'Date of Birth': in_dob,
-                        'Native place ': in_native,
-                        'State': in_state,
-                        'Test requested': 'CYP2C19 Genotyping',
-                        'Is their family lived at Native place for past 3 generations?': in_3gen,
-                        'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else in_cyp2,
-                        'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else in_cyp3,
-                        'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else in_cyp17
-                    }
-                    
-                    if st.session_state['uploaded_df'] is not None:
-                        st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
-                    else:
-                        st.session_state['uploaded_df'] = pd.DataFrame([new_row])
-                        
-                    st.success(f"Sample {in_sid} added successfully!")
-                    st.session_state['wizard_step'] = 2
-                    st.rerun()
-
-        with col_w2:
-            st.markdown("### 📊 Current Cohort Summary")
-            if full_results is not None:
-                st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
-                st.metric("Geographic Groups Covered", "South, North, East, West, Central India")
-                st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("➡️ Proceed to Step 2: Map Columns", type="primary", use_container_width=True):
-                    st.session_state['wizard_step'] = 2
-                    st.rerun()
-
-    # -------------------------------------------------------------------------
-    # STEP 2: MAP COLUMNS (MATCHING EXACT SCREENSHOT media_1789937076505.jpg)
-    # -------------------------------------------------------------------------
-    elif current_step == 2:
-        st.markdown("## Map your columns")
-        num_cols = len(df_raw.columns) if df_raw is not None else 0
-        num_rows = len(df_raw) if df_raw is not None else 0
-        st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
+        # SNP Box 2: rs4986893 (*3)
+        st.markdown("""
+        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+            <h5 style="margin-top: 0; color: #0F172A;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        c2_1, c2_2, c2_3 = st.columns(3)
+        cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
+        sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="snp3_col")
+        c2_2.text_input("Reference allele (*3)", value="G", key="ref_3")
+        c2_3.text_input("Variant allele (*3)", value="A", key="var_3")
         
-        if df_raw is not None:
-            all_cols = list(df_raw.columns)
-            
-            def find_default(patterns, cols):
-                for pattern in patterns:
-                    for c in cols:
-                        if pattern.lower() in str(c).lower():
-                            return c
-                return cols[0] if cols else ""
+        # SNP Box 3: rs12248560 (*17)
+        st.markdown("""
+        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
+            <h5 style="margin-top: 0; color: #0F172A;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        c3_1, c3_2, c3_3 = st.columns(3)
+        cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
+        sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="snp17_col")
+        c3_2.text_input("Reference allele (*17)", value="C", key="ref_17")
+        c3_3.text_input("Variant allele (*17)", value="T", key="var_17")
 
-            col_m1, col_m2, col_m3 = st.columns(3)
-            sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
-            gender_def = find_default(['gender', 'sex'], all_cols)
-            region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
-            
-            sel_sid = col_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
-            sel_gen = col_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
-            sel_reg = col_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### CYP2C19 SNP columns")
-            st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
-            
-            # SNP Box 1: rs4244285 (*2)
-            st.markdown("""
-            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
-                <h5 style="margin-top: 0; color: #0F172A;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
-            </div>
-            """, unsafe_allow_html=True)
-            c1_1, c1_2, c1_3 = st.columns(3)
-            cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
-            sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="snp2_col")
-            c1_2.text_input("Reference allele (*2)", value="G", key="ref_2")
-            c1_3.text_input("Variant allele (*2)", value="A", key="var_2")
-            
-            # SNP Box 2: rs4986893 (*3)
-            st.markdown("""
-            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
-                <h5 style="margin-top: 0; color: #0F172A;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
-            </div>
-            """, unsafe_allow_html=True)
-            c2_1, c2_2, c2_3 = st.columns(3)
-            cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
-            sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="snp3_col")
-            c2_2.text_input("Reference allele (*3)", value="G", key="ref_3")
-            c2_3.text_input("Variant allele (*3)", value="A", key="var_3")
-            
-            # SNP Box 3: rs12248560 (*17)
-            st.markdown("""
-            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
-                <h5 style="margin-top: 0; color: #0F172A;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
-            </div>
-            """, unsafe_allow_html=True)
-            c3_1, c3_2, c3_3 = st.columns(3)
-            cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
-            sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="snp17_col")
-            c3_2.text_input("Reference allele (*17)", value="C", key="ref_17")
-            c3_3.text_input("Variant allele (*17)", value="T", key="var_17")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("➡️ Proceed to Step 3: View Results Dashboard", type="primary", use_container_width=True):
-                st.session_state['wizard_step'] = 3
-                st.rerun()
+        st.session_state['mapped_cols'] = {
+            sel_sid: 'Sample_ID',
+            sel_gen: 'Gender',
+            sel_reg: 'Native_Place',
+            sel_cyp2: 'CYP2C19*2',
+            sel_cyp3: 'CYP2C19*3',
+            sel_cyp17: 'CYP2C19*17'
+        }
 
-    # -------------------------------------------------------------------------
-    # STEP 3: RESULTS DASHBOARD
-    # -------------------------------------------------------------------------
-    elif current_step == 3:
-        st.markdown("## 📊 Executive Summary Results Dashboard")
-        st.caption("Cohort Parameters, Regional Comparison & CPIC Phenotype Distributions")
-        render_unified_results(full_results, qc_report)
+    st.divider()
+
+    # SECTION 3: MANUAL SAMPLE DATA ENTRY FORM
+    st.markdown("### ➕ Manual Sample Data Entry Form")
+    st.caption("Insert individual sample records. Validation rules: CYP2C19*2 accepts GG/GA/AA; CYP2C19*3 accepts GG only; CYP2C19*17 accepts CC/CT/TT.")
+    
+    with st.form("manual_sample_form_single", clear_on_submit=True):
+        f_c1, f_c2 = st.columns(2)
+        in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
+        in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
+        
+        f_c3, f_c4 = st.columns(2)
+        in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
+        in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
+        
+        in_native = st.text_input("Native Place (City / District)", value=in_state)
+        in_3gen = st.selectbox("Is their family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
+        
+        st.markdown("##### CYP2C19 Target Genotypes")
+        fg1, fg2, fg3 = st.columns(3)
+        in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid Call)"])
+        in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "Missing", "GA (Invalid Call)", "AA (Invalid Call)"])
+        in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid Call)"])
+        
+        submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
+        
+        if submit_sample:
+            # Strip out (Invalid Call) suffix if user clicked test option
+            cyp2_val = in_cyp2.split(' ')[0]
+            cyp3_val = in_cyp3.split(' ')[0]
+            cyp17_val = in_cyp17.split(' ')[0]
+
+            new_row = {
+                'sample ID': in_sid,
+                'Gender': in_gender,
+                'Date of Birth': in_dob,
+                'Native place ': in_native,
+                'State': in_state,
+                'Test requested': 'CYP2C19 Genotyping',
+                'Is their family lived at Native place for past 3 generations?': in_3gen,
+                'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else cyp2_val,
+                'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else cyp3_val,
+                'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
+            }
+            
+            if st.session_state['uploaded_df'] is not None:
+                st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
+            else:
+                st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+                
+            st.success(f"Sample {in_sid} added successfully!")
+            st.rerun()
 
 # -----------------------------------------------------------------------------
-# VIEW 4: DATA QUALITY & MISSING AUDIT
+# VIEW 2: EXECUTIVE DASHBOARD (MATCHING SCREENSHOTS 1, 2, 3, 4)
 # -----------------------------------------------------------------------------
-elif nav_option == "🛡️ 4. Data Quality & Missing Audit":
+elif nav_option == "📊 2. Executive Dashboard":
+    st.markdown("## 📊 Executive Summary Dashboard")
+    st.caption("Cohort Parameters, Regional Comparison & CPIC Phenotype Distributions")
+    render_unified_results(full_results, qc_report)
+
+# -----------------------------------------------------------------------------
+# VIEW 3: DATA QUALITY & MISSING AUDIT
+# -----------------------------------------------------------------------------
+elif nav_option == "🛡️ 3. Data Quality & Missing Audit":
     st.markdown("## 🛡️ Data Quality Control (QC) & Missing Values Audit")
     st.caption("Detailed breakdown of valid sample counts, missing genotype rates, duplicate IDs, and invalid genotype calls.")
     
@@ -655,9 +628,9 @@ elif nav_option == "🛡️ 4. Data Quality & Missing Audit":
             st.warning(f"Duplicate Sample IDs Detected: {', '.join([str(x) for x in qc_report['duplicate_sample_ids'][:10]])}")
 
 # -----------------------------------------------------------------------------
-# VIEW 5: GENOTYPE & ALLELE FREQUENCIES
+# VIEW 4: GENOTYPE & ALLELE FREQUENCIES
 # -----------------------------------------------------------------------------
-elif nav_option == "🧬 5. Genotype & Allele Frequencies":
+elif nav_option == "🧬 4. Genotype & Allele Frequencies":
     st.markdown("## 🧬 Genotype Counts & Allele Frequencies Engine")
     st.caption("Exact Genotype Distribution, Zygosity (Homogenous vs Heterogenous), Allele Frequencies (p & q), and Percentages per Variant.")
     
@@ -749,9 +722,9 @@ elif nav_option == "🧬 5. Genotype & Allele Frequencies":
                 st.plotly_chart(fig_g, use_container_width=True)
 
 # -----------------------------------------------------------------------------
-# VIEW 6: HARDY-WEINBERG EQUILIBRIUM
+# VIEW 5: HARDY-WEINBERG EQUILIBRIUM
 # -----------------------------------------------------------------------------
-elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
+elif nav_option == "⚖️ 5. Hardy-Weinberg Equilibrium":
     st.markdown("## ⚖️ Hardy-Weinberg Equilibrium (HWE) Test Engine")
     st.caption("Observed vs Expected Genotype Counts, Allele Frequencies (p & q), Chi-Square Statistic (\\chi^2), P-Values, and Haldane Exact Test")
     
@@ -809,9 +782,9 @@ elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
         """)
 
 # -----------------------------------------------------------------------------
-# VIEW 7: GEOGRAPHIC POPULATION GROUPS
+# VIEW 6: GEOGRAPHIC POPULATION GROUPS
 # -----------------------------------------------------------------------------
-elif nav_option == "🌐 7. Geographic Population Groups":
+elif nav_option == "🌐 6. Geographic Population Groups":
     st.markdown("## 🌐 Geographic Population Groups Analysis")
     st.caption("Complete Population Genetics & Statistical Analysis across South India, North India, East India, West India, and Central India")
     
@@ -865,9 +838,9 @@ elif nav_option == "🌐 7. Geographic Population Groups":
         st.dataframe(pd.DataFrame(cyp2_matrix), use_container_width=True)
 
 # -----------------------------------------------------------------------------
-# VIEW 8: GENDER-WISE ANALYSIS
+# VIEW 7: GENDER-WISE ANALYSIS
 # -----------------------------------------------------------------------------
-elif nav_option == "👫 8. Gender-Wise Analysis":
+elif nav_option == "👫 7. Gender-Wise Analysis":
     st.markdown("## 👫 Gender-Wise Population Pharmacogenomics Analysis")
     st.caption("Complete comparative genetic & pharmacogenomic stratification across Male, Female, and Overall cohorts.")
     
@@ -900,9 +873,9 @@ elif nav_option == "👫 8. Gender-Wise Analysis":
         st.plotly_chart(fig_g2, use_container_width=True)
 
 # -----------------------------------------------------------------------------
-# VIEW 9: DEDICATED STATE-WISE PAGES
+# VIEW 8: DEDICATED STATE-WISE PAGES
 # -----------------------------------------------------------------------------
-elif nav_option == "📍 9. Dedicated State-Wise Pages":
+elif nav_option == "📍 8. Dedicated State-Wise Pages":
     st.markdown("## 📍 Dedicated Individual State Profiles")
     st.caption("Detailed Pharmacogenomic breakdown for every state present in the dataset.")
     
@@ -923,9 +896,9 @@ elif nav_option == "📍 9. Dedicated State-Wise Pages":
             sk4.metric("Poor Metabolizers %", f"{pm_pct}%")
 
 # -----------------------------------------------------------------------------
-# VIEW 10: CYP2C19 CALLING & PHENOTYPES
+# VIEW 9: CYP2C19 CALLING & PHENOTYPES
 # -----------------------------------------------------------------------------
-elif nav_option == "💊 10. CYP2C19 Calling & Phenotypes":
+elif nav_option == "💊 9. CYP2C19 Calling & Phenotypes":
     st.markdown("## 💊 CYP2C19 Star Allele, Diplotype & CPIC Phenotypes")
     st.caption("CPIC Metabolizer Phenotype Calls: Ultrarapid (UM), Rapid (RM), Normal (NM), Intermediate (IM), and Poor Metabolizer (PM)")
     
@@ -942,9 +915,9 @@ elif nav_option == "💊 10. CYP2C19 Calling & Phenotypes":
             st.table(pd.DataFrame([{'Diplotype Call': k, 'Count': v['count'], 'Frequency': v['frequency'], 'Percentage': f"{v['percentage']}%"} for k, v in pgx['diplotypes'].items()]))
 
 # -----------------------------------------------------------------------------
-# VIEW 11: LIVE PREVIEW & DOWNLOAD REPORT
+# VIEW 10: LIVE PREVIEW & DOWNLOAD REPORT
 # -----------------------------------------------------------------------------
-elif nav_option == "📄 11. Live Preview & Download Report":
+elif nav_option == "📄 10. Live Preview & Download Report":
     st.markdown("## 📄 Live Report Preview & Multi-Format Exporters")
     st.caption("Review full statistical document preview below before initiating file export.")
     
