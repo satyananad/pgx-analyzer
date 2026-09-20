@@ -607,33 +607,47 @@ elif nav_option == "🌐 7. Geographic Population Groups":
             
         st.dataframe(pd.DataFrame(comp_rows), use_container_width=True)
 
-        st.markdown("### 🗺️ Select Active Region Profile")
-        sel_reg = st.radio("Choose Region Profile:", regions, horizontal=True)
-        r_active = reg.get(sel_reg, {})
-        
-        col_rg1, col_rg2 = st.columns(2)
-        with col_rg1:
-            st.markdown(f"**Genotype Distribution for {sel_reg}**")
-            r_snps = r_active.get('snps', {})
-            g_list = []
-            for snp, sdata in r_snps.items():
-                for g, cnt in sdata.get('genotype_counts', {}).items():
-                    g_list.append({'Variant': f"{snp} ({g})", 'Count': cnt, 'Frequency': sdata.get('genotype_freqs', {}).get(g, 0)})
-            st.table(pd.DataFrame(g_list))
-            
-        with col_rg2:
-            st.markdown(f"**CPIC Phenotype Breakdown for {sel_reg}**")
-            r_phenos = r_active.get('cyp2c19_summary', {}).get('phenotypes', {})
-            p_list = [{'Phenotype': k, 'Count': v['count'], 'Percentage': f"{v['percentage']}%"} for k, v in r_phenos.items()]
-            st.table(pd.DataFrame(p_list))
-            
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📊 Primary Visual: Regional Variant Allele Frequency Comparison")
-        cyp2_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0) for r in regions]
-        cyp17_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0) for r in regions]
-        reg_comp_df = pd.DataFrame({'Region': regions, 'CYP2C19*2 (Var A)': cyp2_freqs, 'CYP2C19*17 (Var T)': cyp17_freqs})
-        fig_reg = px.bar(reg_comp_df, x='Region', y=['CYP2C19*2 (Var A)', 'CYP2C19*17 (Var T)'], barmode='group', title="Variant Allele Frequencies across 5 Indian Geographic Regions")
-        st.plotly_chart(fig_reg, use_container_width=True)
+        st.markdown("### 🗺️ Individual Geographic Region Profiles & Separate Regional Visualizations")
+        st.caption("Select any region tab below to inspect its dedicated genotype tables, phenotype breakdown, and separate visual chart.")
+        
+        reg_tabs = st.tabs(["🌴 South India", "🌾 North India", "🌊 East India", "🕌 West India", "🏛️ Central India"])
+        
+        for idx, r_name in enumerate(regions):
+            with reg_tabs[idx]:
+                r_active = reg.get(r_name, {})
+                r_snps = r_active.get('snps', {})
+                r_phenos = r_active.get('cyp2c19_summary', {}).get('phenotypes', {})
+                
+                # Region KPI metrics
+                rk1, rk2, rk3, rk4 = st.columns(4)
+                rk1.metric(f"{r_name} Samples (N)", f"{r_active.get('sample_count', 0):,}")
+                rk2.metric("Missing Data Rate", f"{r_active.get('missing_pct', 0)}%")
+                cyp2_a_freq = r_snps.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+                rk3.metric("CYP2C19*2 Var Freq f(A)", cyp2_a_freq)
+                r_pm_pct = r_phenos.get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+                rk4.metric("Poor Metabolizers %", f"{r_pm_pct}%")
+                
+                col_rg1, col_rg2 = st.columns(2)
+                with col_rg1:
+                    st.markdown(f"**Genotype Distribution for {r_name}**")
+                    g_list = []
+                    for snp, sdata in r_snps.items():
+                        for g, cnt in sdata.get('genotype_counts', {}).items():
+                            g_list.append({'Variant': f"{snp} ({g})", 'Count': cnt, 'Frequency': sdata.get('genotype_freqs', {}).get(g, 0)})
+                    st.table(pd.DataFrame(g_list))
+                    
+                with col_rg2:
+                    st.markdown(f"**CPIC Phenotype Breakdown for {r_name}**")
+                    p_list = [{'Phenotype': k, 'Count': v['count'], 'Percentage': f"{v['percentage']}%"} for k, v in r_phenos.items()]
+                    st.table(pd.DataFrame(p_list))
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown(f"### 📊 Dedicated Visual: CPIC Phenotype Distribution for {r_name}")
+                r_p_labels = [k.replace(' Metabolizer', '') for k, v in r_phenos.items() if v['count'] > 0]
+                r_p_vals = [v['count'] for k, v in r_phenos.items() if v['count'] > 0]
+                fig_r_pie = px.pie(names=r_p_labels, values=r_p_vals, hole=0.45, color_discrete_sequence=px.colors.qualitative.Bold, title=f"CPIC Metabolizer Phenotypes in {r_name}")
+                st.plotly_chart(fig_r_pie, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # VIEW 8: GENDER-WISE ANALYSIS
