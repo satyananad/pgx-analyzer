@@ -1,0 +1,150 @@
+"""
+Population Genetics Engine for Genotype, Allele, and Hardy-Weinberg Equilibrium Analysis.
+Implements Chi-square goodness-of-fit test and exact HWE calculation.
+"""
+
+import pandas as pd
+import numpy as np
+from scipy import stats
+from typing import Dict, Any, Optional
+import math
+
+from config import SNP_CONFIG, ALPHA_SIGNIFICANCE
+
+
+class GeneticStatsEngine:
+    @staticmethod
+    def exact_hwe_pvalue(n_AA: int, n_Aa: int, n_aa: int) -> float:
+        """
+        Calculates Haldane / Wigginton Exact HWE P-value for biallelic SNPs.
+        Useful when sample size is small or expected counts are < 5.
+        """
+        n = n_AA + n_Aa + n_aa
+        if n == 0:
+            return 1.0
+        
+        n_A = 2 * n_AA + n_Aa
+        n_a = 2 * n_aa + n_Aa
+        
+        # Possible count of heterozygotes with same allele counts
+        # n_Aa must have same parity as n_A (or n_a)
+        start_het = n_A % 2
+        
+        # Calculate probability distribution of het count
+        def het_prob(h):
+            # h is number of heterozygotes
+            n_AA_h = (n_A - h) // 2
+            n_aa_h = (n_a - h) // 2
+            if n_AA_h < 0 or n_aa_h < 0:
+                return 0.0
+            # log probability via log gamma/fact
+            log_p = (math.lgamma(n + 1) + math.lgamma(n_A + 1) + math.lgamma(n_a + 1) + math.lgamma(2*n - n_A - n_a + 1) 
+                     - (math.lgamma(2*n + 1) + math.lgamma(n_AA_h + 1) + math.lgamma(h + 1) + math.lgamma(n_aa_h + 1)))
+            return math.exp(log_p)
+
+        observed_prob = het_prob(n_Aa)
+        
+        p_val = 0.0
+        max_het = min(n_A, n_a)
+        for h in range(start_het, max_het + 1, 2):
+            prob = het_prob(h)
+            if prob <= observed_prob + 1e-12:
+                p_val += prob
+                
+        return min(1.0, p_val)
+
+    @classmethod
+    def analyze_snp(cls, series: pd.Series, snp_name: str) -> Dict[str, Any]:
+        """
+        Performs full Genotype, Allele, and HWE analysis for a single SNP column.
+        """
+        clean_series = series.dropna().astype(str).str.strip().str.upper()
+        n_valid = len(clean_series)
+        
+        snp_info = SNP_CONFIG.get(snp_name, {
+            'ref_allele': 'A',
+            'var_allele': 'B',
+            'wildtype_genotype': 'AA',
+            'het_genotype': 'AB',
+            'hom_var_genotype': 'BB'
+        })
+        
+        ref_allele = snp_info['ref_allele']
+        var_allele = snp_info['var_allele']
+        wt_gen = snp_info['wildtype_genotype']
+        het_gen = snp_info['het_genotype']
+        var_gen = snp_info['hom_var_genotype']
+        
+        if n_valid == 0:
+            return {
+                'snp_name': snp_name,
+                'valid_samples': 0,
+                'genotype_counts': {wt_gen: 0, het_gen: 0, var_gen: 0},
+                'genotype_freqs': {wt_gen: 0.0, het_gen: 0.0, var_gen: 0.0},
+                'genotype_pcts': {wt_gen: 0.0, het_gen: 0.0, var_gen: 0.0},
+                'allele_counts': {ref_allele: 0, var_allele: 0},
+                'allele_freqs': {ref_allele: 0.0, var_allele: 0.0},
+                'allele_pcts': {ref_allele: 0.0, var_allele: 0.0},
+                'hwe': {
+                    'expected_counts': {wt_gen: 0.0, het_gen: 0.0, var_gen: 0.0},
+                    'chi2_stat': 0.0,
+                    'df': 1,
+                    'p_value': 1.0,
+                    'exact_p_value': 1.0,
+                    'interpretation': 'No Data'
+                }
+            }
+
+        # 1. Genotype Counts
+        c_wt = int((clean_series == wt_gen).sum())
+        c_het = int((clean_series == het_gen).sum() + (clean_series == het_gen[::-1]).sum() if het_gen != het_gen[::-1] else (clean_series == het_gen).sum())
+        c_var = int((clean_series == var_gen).sum())
+        
+        f_wt = c_wt / n_valid
+        f_het = c_het / n_valid
+        f_var = c_var / n_valid
+        
+        # 2. Allele Counts
+        c_ref_allele = (2 * c_wt) + c_het
+        c_var_allele = (2 * c_var) + c_het
+        total_alleles = 2 * n_valid
+        
+        p = c_ref_allele / total_alleles if total_alleles > 0 else 0.0
+        q = c_var_allele / total_alleles if total_alleles > 0 else 0.0
+        
+        # 3. Hardy-Weinberg Equilibrium
+        exp_wt = n_valid * (p ** 2)
+        exp_het = n_valid * (2 * p * q)
+        exp_var = n_valid * (q ** 2)
+        
+        # Chi-square calculation with safety for division by zero
+        chi2_stat = 0.0
+        if exp_wt > 0:  chi2_stat += ((c_wt - exp_wt) ** 2) / exp_wt
+        if exp_het > 0: chi2_stat += ((c_het - exp_het) ** 2) / exp_het
+        if exp_var > 0: chi2_stat += ((c_var - exp_var) ** 2) / exp_var
+        
+        p_val = stats.chi2.sf(chi2_stat, df=1) if chi2_stat > 0 else 1.0
+        exact_p_val = cls.exact_hwe_pvalue(c_wt, c_het, c_var)
+        
+        # Interpretation
+        final_p = exact_p_val if (exp_wt < 5 or exp_het < 5 or exp_var < 5) else p_val
+        interpretation = "In HWE" if final_p >= ALPHA_SIGNIFICANCE else "Departure from HWE"
+        
+        return {
+            'snp_name': snp_name,
+            'valid_samples': n_valid,
+            'genotype_counts': {wt_gen: c_wt, het_gen: c_het, var_gen: c_var},
+            'genotype_freqs': {wt_gen: round(f_wt, 4), het_gen: round(f_het, 4), var_gen: round(f_var, 4)},
+            'genotype_pcts': {wt_gen: round(f_wt * 100, 2), het_gen: round(f_het * 100, 2), var_gen: round(f_var * 100, 2)},
+            'allele_counts': {ref_allele: c_ref_allele, var_allele: c_var_allele},
+            'allele_freqs': {ref_allele: round(p, 4), var_allele: round(q, 4)},
+            'allele_pcts': {ref_allele: round(p * 100, 2), var_allele: round(q * 100, 2)},
+            'hwe': {
+                'expected_counts': {wt_gen: round(exp_wt, 2), het_gen: round(exp_het, 2), var_gen: round(exp_var, 2)},
+                'chi2_stat': round(chi2_stat, 4),
+                'df': 1,
+                'p_value': round(p_val, 4),
+                'exact_p_value': round(exact_p_val, 4),
+                'interpretation': interpretation
+            }
+        }
