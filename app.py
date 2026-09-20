@@ -251,7 +251,7 @@ if nav_option == "🏠 1. Welcome & Data Entry":
         </div>
         <ul class="feature-callout-list">
             <li><strong>Duplicate checking:</strong> Automatic cross-check against existing sample IDs.</li>
-            <li><strong>Automatic validation:</strong> Strict genotype checking preventing wrong entries (CYP2C19*2: GG/GA/AA, CYP2C19*3: GG/GA/AA, CYP2C19*17: CC/CT/TT).</li>
+            <li><strong>Automatic validation:</strong> Strict genotype checking preventing wrong entries (CYP2C19*2: GA/AA/GG, CYP2C19*3: GG, CYP2C19*17: CC/CT/TT).</li>
             <li><strong>Automatic recalculation:</strong> Real-time update of allele frequencies ($p$ & $q$) and HWE statistics.</li>
             <li><strong>Updated population statistics:</strong> Geographic stratification across South, North, East, West, and Central India.</li>
             <li><strong>Updated diplotype and phenotype distributions:</strong> CPIC metabolizer calls (UM, RM, NM, IM, PM).</li>
@@ -298,8 +298,8 @@ if nav_option == "🏠 1. Welcome & Data Entry":
             
             st.markdown("##### CYP2C19 Target Genotypes")
             fg1, fg2, fg3 = st.columns(3)
-            in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GG", "GA", "AA", "Missing"])
-            in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "GA", "AA", "Missing"])
+            in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing"])
+            in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "Missing"])
             in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing"])
             
             submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)

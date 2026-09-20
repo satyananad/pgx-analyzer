@@ -126,7 +126,7 @@ SNP_CONFIG: Dict[str, Dict] = {
         'rsid': 'rs4986893',
         'ref_allele': 'G',
         'var_allele': 'A',
-        'valid_genotypes': {'GG', 'GA', 'AG', 'AA'},
+        'valid_genotypes': {'GG'},
         'wildtype_genotype': 'GG',
         'het_genotype': 'GA',
         'hom_var_genotype': 'AA'
