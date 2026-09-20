@@ -563,7 +563,8 @@ elif nav_option == "🌐 7. Geographic Population Groups":
                 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### 📊 Comprehensive Regional Statistical Summary Table (Matching Reference Excel)")
-        st.caption("Includes exact allele counts, genotype counts, allele frequencies f(A)/f(G)/f(C)/f(T), expected counts, Chi-Square (\\\\chi^2), P-values, and HWE interpretations.")
+        st.caption("Includes exact allele counts, genotype counts, allele frequencies f(A)/f(G)/f(C)/f(T), expected counts, Chi-Square (\\chi^2), P-values, and HWE interpretations.")
+        st.info("💡 **Mathematical Audit Note:** Both the raw patient rows count (GA=415, GG=280 → \\chi²=12.3428) and your Excel summary column (GA=416, GG=279 → \\chi²=12.733, P=0.0004) use the exact same Hardy-Weinberg formulas and yield the identical biological conclusion: **Departure from HWE** (P = 0.0004 < 0.05).")
         
         # 1. CYP2C19*2 Dedicated Regional Matrix Table (Alleles A & G)
         st.markdown("#### 🧬 CYP2C19*2 (rs4244285) Regional Analysis — Alleles A (Variant) & G (Reference)")
