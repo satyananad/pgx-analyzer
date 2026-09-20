@@ -48,13 +48,15 @@ STATE_TO_REGION: Dict[str, str] = {
     'Nagaland': 'East India',
     'Sikkim': 'East India',
     
-    # West India / Central India
+    # West India
     'Maharashtra': 'West India',
     'Gujarat': 'West India',
-    'Madhya Pradesh': 'West India',
-    'Chhattisgarh': 'West India',
     'Dadra and Nagar Haveli': 'West India',
-    'Daman and Diu': 'West India'
+    'Daman and Diu': 'West India',
+    
+    # Central India
+    'Madhya Pradesh': 'Central India',
+    'Chhattisgarh': 'Central India'
 }
 
 # City/District to State gazetteer for native place prediction when State is missing/ambiguous

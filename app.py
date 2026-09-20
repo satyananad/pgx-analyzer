@@ -1,13 +1,15 @@
 """
 Automated Population Pharmacogenomics Analysis Platform
-Comprehensive Multi-Page Streamlit SaaS Application with:
-1. Visual Welcome & 12-Step Pipeline Banner
-2. Upload & Column Mapping Engine (Handling CYP2C19*2 rs4244285, CYP2C19*3 rs4986893, CYP2C19*17 rs12248560)
-3. Executive Summary Dashboard & Metric Cards
+Comprehensive Multi-Page Streamlit Application
+
+Full implementation of the 12-Section Specification:
+1. Title & Aim
+2. Input Data Normalization (CYP2C19*2 rs4244285, CYP2C19*3 rs4986893, CYP2C19*17 rs12248560)
+3. Visual Welcome Landing Screen with Incremental Dataset Batch Insertion
 4. Data Quality Control (QC) & Missing Values Audit
-5. Genotype & Allele Frequency Engine (p & q calculation)
+5. Genotype Counts & Allele Frequency Engine (p & q calculation)
 6. Hardy-Weinberg Equilibrium Engine (Chi2, P-Value, Haldane Exact Test)
-7. Geographic Population Groups (North India, South India, East India, West India)
+7. Geographic Population Groups (South India, North India, East India, West India, Central India)
 8. Dedicated State-Wise Analysis Pages (Individual State Profiles)
 9. CYP2C19 Star Allele, Diplotype Calling & CPIC Phenotype Classification (UM, RM, NM, IM, PM)
 10. Live Report Preview & Multi-Format Exporter (Excel, CSV, PDF)
@@ -53,7 +55,7 @@ CUSTOM_CSS = """
         border-radius: 16px;
         padding: 2.2rem;
         color: white;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
     }
     .hero-title {
@@ -66,7 +68,7 @@ CUSTOM_CSS = """
     .hero-subtitle {
         font-size: 1.05rem;
         color: #CBD5E1;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
         line-height: 1.6;
     }
 
@@ -91,6 +93,27 @@ CUSTOM_CSS = """
         color: #818CF8;
         font-weight: 800;
         font-size: 0.9rem;
+    }
+
+    /* New Data Batch Feature Callout Box */
+    .feature-callout-box {
+        background-color: #F0FDF4;
+        border: 1.5px solid #86EFAC;
+        border-radius: 12px;
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .feature-callout-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #166534;
+        margin-bottom: 0.5rem;
+    }
+    .feature-callout-list {
+        font-size: 0.9rem;
+        color: #15803D;
+        line-height: 1.6;
+        margin-left: 1.2rem;
     }
 
     /* Metric Card Grid */
@@ -124,11 +147,6 @@ CUSTOM_CSS = """
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         margin-bottom: 1.5rem;
     }
-
-    /* Table Styling */
-    .dataframe {
-        font-size: 0.85rem !important;
-    }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -139,12 +157,6 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
 
-if 'selected_state' not in st.session_state:
-    st.session_state['selected_state'] = 'Andhra Pradesh'
-
-if 'selected_region' not in st.session_state:
-    st.session_state['selected_region'] = 'North India'
-
 # Workspace demo file path
 demo_file_path = "categorized by state into North, South, East, West .xlsx"
 if st.session_state['uploaded_df'] is None and os.path.exists(demo_file_path):
@@ -154,7 +166,7 @@ db_manager = DatabaseManager()
 existing_sample_ids = db_manager.get_existing_sample_ids()
 
 # -----------------------------------------------------------------------------
-# 3. SIDEBAR NAVIGATION
+# 3. SIDEBAR NAVIGATION MENU
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=64)
@@ -166,14 +178,14 @@ with st.sidebar:
     nav_option = st.radio(
         "Navigation Menu:",
         [
-            "🏠 1. Welcome & Workflow",
+            "🏠 1. Welcome & Data Insertion",
             "📂 2. Upload & Map Columns",
             "📊 3. Executive Dashboard",
             "🛡️ 4. Data Quality & Missing Audit",
             "🧬 5. Genotype & Allele Frequencies",
             "⚖️ 6. Hardy-Weinberg Equilibrium",
             "🌐 7. Geographic Population Groups",
-            "📍 8. State-Wise Analysis Pages",
+            "📍 8. Dedicated State-Wise Pages",
             "💊 9. CYP2C19 Calling & Phenotypes",
             "📄 10. Live Preview & Download Report"
         ],
@@ -183,12 +195,12 @@ with st.sidebar:
     st.divider()
     st.markdown("### Quick Action")
     if os.path.exists(demo_file_path):
-        if st.button("🔄 Reload 1,044 Sample Dataset", use_container_width=True):
+        if st.button("🔄 Reload Workspace Dataset (1,044 Samples)", use_container_width=True):
             st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-            st.success("Loaded demo dataset!")
+            st.success("Loaded workspace dataset!")
             st.rerun()
 
-# Process data if available
+# Execute Pipeline Analysis
 df_raw = st.session_state['uploaded_df']
 clean_df = None
 qc_report = None
@@ -206,14 +218,14 @@ if df_raw is not None:
         pass
 
 # -----------------------------------------------------------------------------
-# VIEW 1: WELCOME & WORKFLOW SCREEN
+# VIEW 1: WELCOME & DATA INSERTION SCREEN
 # -----------------------------------------------------------------------------
-if nav_option == "🏠 1. Welcome & Workflow":
+if nav_option == "🏠 1. Welcome & Data Insertion":
     st.markdown("""
     <div class="hero-banner">
         <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
         <div class="hero-subtitle">
-            Comprehensive automated pipeline for Genotype counting, Allele Frequency ($p$ & $q$), Hardy–Weinberg Equilibrium ($\chi^2$ & Haldane Exact Test), Geographic Population Stratification (North, South, East, West India), Dedicated State Pages, and CPIC CYP2C19 Star Allele/Diplotype Metabolizer Phenotype Classification.
+            Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
         </div>
         <div class="pipeline-container">
             <span class="pipeline-step">1. Excel Upload</span> <span class="pipeline-arrow">➔</span>
@@ -221,62 +233,80 @@ if nav_option == "🏠 1. Welcome & Workflow":
             <span class="pipeline-step">3. Genotype Normalization</span> <span class="pipeline-arrow">➔</span>
             <span class="pipeline-step">4. Allele Freq (p & q)</span> <span class="pipeline-arrow">➔</span>
             <span class="pipeline-step">5. HWE Chi2 Test</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">6. Geographic Stratification</span> <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">6. Geographic Groups</span> <span class="pipeline-arrow">➔</span>
             <span class="pipeline-step">7. State Pages</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">8. Star Allele Assignment</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">9. Diplotype Call</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">10. CPIC Phenotype Call</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">11. Interactive Charts</span> <span class="pipeline-arrow">➔</span>
-            <span class="pipeline-step">12. Multi-Format Export</span>
+            <span class="pipeline-step">8. Star Alleles</span> <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">9. Diplotypes</span> <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">10. CPIC Phenotypes</span> <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">11. Visualizations</span> <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">12. Multi-Export</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
+    # Feature Callout Box as requested in spec
+    st.markdown("""
+    <div class="feature-callout-box">
+        <div class="feature-callout-title">✨ Scalable Data Insertion & Incremental Batch Processing</div>
+        <div style="font-size: 0.9rem; color: #166534; margin-bottom: 0.5rem;">
+            New datasets can be uploaded and incorporated into the existing workspace with:
+        </div>
+        <ul class="feature-callout-list">
+            <li><strong>Duplicate checking:</strong> Automatic cross-check against historical sample IDs.</li>
+            <li><strong>Automatic validation:</strong> Instant genotype format cleaning (GA, GG, CC, AA, CT, TT, etc.).</li>
+            <li><strong>Automatic recalculation:</strong> Real-time update of allele frequencies ($p$ & $q$) and HWE statistics.</li>
+            <li><strong>Updated population statistics:</strong> Stratified analysis across 5 Indian Geographic Population Groups.</li>
+            <li><strong>Updated diplotype and phenotype distributions:</strong> CPIC metabolizer calls (UM, RM, NM, IM, PM).</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
     col_w1, col_w2 = st.columns([2, 1])
     
     with col_w1:
-        st.markdown("""
-        <div class="card-box">
-            <h3>🔬 Automated Analysis Features</h3>
-            <ul>
-                <li><strong>Data Quality Control & Missing Audit:</strong> Automatic validation of Sample IDs, gender normalization, duplicate tracking, and missing genotype rates (%).</li>
-                <li><strong>Population Genetics Engine:</strong> Instant calculation of genotype counts ($GG, GA, AA$, etc.), allele frequencies ($p$ & $q$), Chi-Square ($\chi^2$), $df=1$, Chi2 P-values, and Haldane/Wigginton exact tests.</li>
-                <li><strong>Geographic Population Stratification:</strong> Dedicated population groups for <strong>North India</strong>, <strong>South India</strong>, <strong>East India</strong>, and <strong>West India</strong>.</li>
-                <li><strong>Dedicated Individual State Pages:</strong> Complete individual profiles for all Indian states in dataset (Andhra Pradesh, Punjab, Maharashtra, Uttar Pradesh, West Bengal, Tamil Nadu, etc.).</li>
-                <li><strong>CPIC CYP2C19 Classifier:</strong> Automated star allele calls (*1, *2, *3, *17), diplotype assignments (*1/*1, *1/*2, *2/*17, etc.), and metabolizer phenotypes (UM, RM, NM, IM, PM).</li>
-                <li><strong>Multi-Format Reports:</strong> Interactive document preview and 1-click downloads for Multi-Tab Excel (.xlsx), CSV, and PDF summaries.</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
+        st.markdown("### 📥 Insert / Upload New Genotype Dataset")
+        file_upload = st.file_uploader(
+            "Upload Excel (.xlsx, .xls) or CSV file with Sample ID, Gender, DOB, State/Native Place, and CYP2C19 genotypes",
+            type=["xlsx", "xls", "csv"],
+            key="welcome_uploader"
+        )
+        if file_upload is not None:
+            try:
+                if file_upload.name.endswith('.csv'):
+                    df_load = pd.read_csv(file_upload)
+                else:
+                    df_load = pd.read_excel(file_upload)
+                st.session_state['uploaded_df'] = df_load
+                st.success(f"Successfully Imported: {file_upload.name} ({len(df_load):,} samples)")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Upload error: {e}")
+                
+        if os.path.exists(demo_file_path):
+            if st.button("🚀 Load Workspace Dataset (1,044 Samples)", use_container_width=True, type="primary"):
+                st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
+                st.success("Loaded workspace dataset!")
+                st.rerun()
+
     with col_w2:
         st.markdown("""
-        <div class="card-box" style="text-align: center;">
-            <h4>🚀 Quick Start</h4>
-            <p style="font-size: 0.85rem; color: #64748B;">Workspace dataset is loaded and ready for immediate analysis.</p>
+        <div class="card-box">
+            <h4>📊 Current Dataset Summary</h4>
         </div>
         """, unsafe_allow_html=True)
-        
-        if df_raw is not None:
-            st.metric("Total Validated Samples", f"{len(processed_df):,}")
-            st.metric("Geographic Groups Analyzed", "North, South, East, West India")
+        if full_results is not None:
+            st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
+            st.metric("Geographic Groups Covered", "South, North, East, West, Central India")
             st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
-            if st.button("📊 Launch Dashboard Now ➔", type="primary", use_container_width=True):
-                st.session_state['nav_option'] = "📊 3. Executive Dashboard"
-                st.rerun()
 
 # -----------------------------------------------------------------------------
 # VIEW 2: UPLOAD & MAP COLUMNS
 # -----------------------------------------------------------------------------
 elif nav_option == "📂 2. Upload & Map Columns":
     st.markdown("## 📂 Upload Genotype Dataset & Map Columns")
-    st.caption("Upload Excel (.xlsx, .xls) or CSV files containing Sample ID, Gender, DOB, State/Native Place, and CYP2C19 genotypes.")
+    st.caption("Auto-mapping for headers: sample ID, Gender, Date of Birth, Native place, State, Test requested, CYP2C19*2 (rs4244285), CYP2C19*3 (rs4986893), CYP2C19*17 (rs12248560).")
     
-    file_upload = st.file_uploader(
-        "Choose an Excel (.xlsx, .xls) or CSV file",
-        type=["xlsx", "xls", "csv"]
-    )
-    
+    file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="map_uploader")
     if file_upload is not None:
         try:
             if file_upload.name.endswith('.csv'):
@@ -284,13 +314,13 @@ elif nav_option == "📂 2. Upload & Map Columns":
             else:
                 df_load = pd.read_excel(file_upload)
             st.session_state['uploaded_df'] = df_load
-            st.success(f"Successfully Loaded File: {file_upload.name} ({len(df_load):,} samples, {len(df_load.columns)} columns)")
+            st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
             st.rerun()
         except Exception as e:
             st.error(f"Error loading file: {e}")
 
     if df_raw is not None:
-        st.markdown("### 🛠️ Column Header Verification & Mapping")
+        st.markdown("### 🛠️ Detected Headers & Mapping Verification")
         all_cols = list(df_raw.columns)
         
         def find_default(patterns, cols):
@@ -309,7 +339,7 @@ elif nav_option == "📂 2. Upload & Map Columns":
         col_m2.selectbox("Gender Column", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
         col_m3.selectbox("Region / State Column", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
         
-        st.markdown("#### CYP2C19 Target Variant Header Mapping")
+        st.markdown("#### Target Variant Header Mapping")
         cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
         cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
         cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
@@ -324,7 +354,7 @@ elif nav_option == "📂 2. Upload & Map Columns":
 # -----------------------------------------------------------------------------
 elif nav_option == "📊 3. Executive Dashboard":
     st.markdown("## 📊 Executive Summary Dashboard")
-    st.caption("Overview of Cohort Parameters, Regional Comparison & CPIC Phenotypes")
+    st.caption("Cohort Parameters, Regional Comparison & CPIC Phenotype Distributions")
     
     if full_results is not None:
         ov = full_results['overall']
@@ -338,21 +368,21 @@ elif nav_option == "📊 3. Executive Dashboard":
 
         ch1, ch2 = st.columns(2)
         with ch1:
-            st.markdown("### 🍩 Overall Metabolizer Phenotype Distribution")
+            st.markdown("### 🍩 Overall Metabolizer Phenotype Breakdown")
             p_labels = [k.replace(' Metabolizer', '') for k, v in pgx.items() if v['count'] > 0]
             p_vals = [v['count'] for k, v in pgx.items() if v['count'] > 0]
             fig_pie = px.pie(names=p_labels, values=p_vals, hole=0.45, color_discrete_sequence=px.colors.qualitative.Set2)
             st.plotly_chart(fig_pie, use_container_width=True)
             
         with ch2:
-            st.markdown("### 📊 Regional Allele Frequency Comparison")
+            st.markdown("### 📊 Regional Variant Allele Frequency Comparison")
             reg = full_results['regional']
-            r_names = ['North India', 'South India', 'East India', 'West India']
+            r_names = ['South India', 'North India', 'East India', 'West India', 'Central India']
             cyp2_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0) for r in r_names]
             cyp17_freqs = [reg.get(r, {}).get('snps', {}).get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0) for r in r_names]
             
             comp_df = pd.DataFrame({'Region': r_names, 'CYP2C19*2 (Var A)': cyp2_freqs, 'CYP2C19*17 (Var T)': cyp17_freqs})
-            fig_reg = px.bar(comp_df, x='Region', y=['CYP2C19*2 (Var A)', 'CYP2C19*17 (Var T)'], barmode='group', title="Variant Allele Frequencies by Region")
+            fig_reg = px.bar(comp_df, x='Region', y=['CYP2C19*2 (Var A)', 'CYP2C19*17 (Var T)'], barmode='group', title="Allele Frequencies by Region")
             st.plotly_chart(fig_reg, use_container_width=True)
 
 # -----------------------------------------------------------------------------
@@ -419,7 +449,7 @@ elif nav_option == "🧬 5. Genotype & Allele Frequencies":
 # -----------------------------------------------------------------------------
 elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
     st.markdown("## ⚖️ Hardy-Weinberg Equilibrium (HWE) Test Engine")
-    st.caption("Observed vs Expected Genotype Counts, Chi-Square Statistic ($\chi^2$), P-Values, and Haldane Exact Test")
+    st.caption("Observed vs Expected Genotype Counts, Chi-Square Statistic (\\\\chi^2), P-Values, and Haldane Exact Test")
     
     if full_results is not None:
         snps_data = full_results['overall']['snps']
@@ -444,19 +474,17 @@ elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
 # -----------------------------------------------------------------------------
 elif nav_option == "🌐 7. Geographic Population Groups":
     st.markdown("## 🌐 Geographic Population Groups Analysis")
-    st.caption("Standard Population Stratification across North India, South India, East India, and West India")
+    st.caption("Standard Population Stratification across South India, North India, East India, West India, and Central India")
     
     if full_results is not None:
         reg = full_results['regional']
-        regions = ['North India', 'South India', 'East India', 'West India']
+        regions = ['South India', 'North India', 'East India', 'West India', 'Central India']
         
-        # 4 Top Summary Cards
-        r1, r2, r3, r4 = st.columns(4)
-        cols_map = {'North India': r1, 'South India': r2, 'East India': r3, 'West India': r4}
-        
-        for r in regions:
+        # 5 Top Summary Cards
+        cols = st.columns(5)
+        for idx, r in enumerate(regions):
             r_data = reg.get(r, {})
-            with cols_map[r]:
+            with cols[idx]:
                 st.markdown(f"""
                 <div class="kpi-card">
                     <div class="kpi-lbl">{r}</div>
@@ -516,7 +544,7 @@ elif nav_option == "🌐 7. Geographic Population Groups":
 # -----------------------------------------------------------------------------
 # VIEW 8: STATE-WISE ANALYSIS PAGES
 # -----------------------------------------------------------------------------
-elif nav_option == "📍 8. State-Wise Analysis Pages":
+elif nav_option == "📍 8. Dedicated State-Wise Pages":
     st.markdown("## 📍 Dedicated Individual State Profiles")
     st.caption("Detailed Pharmacogenomic breakdown for every state present in the dataset.")
     
@@ -585,7 +613,7 @@ elif nav_option == "📄 10. Live Preview & Download Report":
         
         st.markdown(f"**Total Cohort Analyzed:** {full_results['overall']['sample_count']:,} Samples")
         st.markdown("**Target Gene:** CYP2C19 (*2 rs4244285, *3 rs4986893, *17 rs12248560)")
-        st.markdown("**Geographic Stratification:** North India, South India, East India, West India")
+        st.markdown("**Geographic Stratification:** South India, North India, East India, West India, Central India")
         
         st.markdown("#### Hardy-Weinberg Summary")
         hwe_rows = []

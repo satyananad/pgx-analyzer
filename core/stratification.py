@@ -34,8 +34,9 @@ class DemographicStratifier:
             if k.lower() == state_raw.lower():
                 return v
 
-        # 3. Check for direct region string (e.g. "North India ", "South India ")
+        # 3. Check for direct region string (e.g. "North India ", "South India ", "Central India ")
         state_clean = re.sub(r'\s+', ' ', state_raw).title()
+        if 'Central' in state_clean: return 'Central India'
         if 'North' in state_clean: return 'North India'
         if 'South' in state_clean: return 'South India'
         if 'East' in state_clean:  return 'East India'
@@ -102,8 +103,8 @@ class DemographicStratifier:
         # 1. Overall Population Analysis
         results['overall'] = analyze_subgroup(data_processed, 'Overall Population')
         
-        # 2. Regional Analysis (North, South, East, West India)
-        standard_regions = ['North India', 'South India', 'East India', 'West India']
+        # 2. Regional Analysis (North, South, East, West, Central India)
+        standard_regions = ['North India', 'South India', 'East India', 'West India', 'Central India']
         for region in standard_regions:
             reg_df = data_processed[data_processed['Region'] == region]
             results['regional'][region] = analyze_subgroup(reg_df, region)
