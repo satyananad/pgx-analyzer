@@ -143,7 +143,8 @@ CUSTOM_CSS = """
         margin-top: 0.2rem;
     }
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT
