@@ -502,28 +502,65 @@ elif nav_option == "🧬 5. Genotype & Allele Frequencies":
 # -----------------------------------------------------------------------------
 elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
     st.markdown("## ⚖️ Hardy-Weinberg Equilibrium (HWE) Test Engine")
-    st.caption("Observed vs Expected Genotype Counts, Chi-Square Statistic (\\\\chi^2), P-Values, and Haldane Exact Test")
+    st.caption("Observed vs Expected Genotype Counts, Allele Frequencies (p & q), Chi-Square Statistic (\\chi^2), P-Values, and Haldane Exact Test")
     
     if full_results is not None:
         snps_data = full_results['overall']['snps']
-        hwe_rows = []
+        
+        # 1. Detailed HWE Reference Sheet Table
+        st.markdown("### 📊 HWE Parameter Breakdown per Target SNP")
+        full_hwe_rows = []
         for snp_name, s_res in snps_data.items():
-            hw = s_res['hwe']
-            obs_str = " · ".join([f"{k}:{v}" for k, v in s_res['genotype_counts'].items()])
-            exp_str = " · ".join([f"{k}:{v}" for k, v in hw['expected_counts'].items()])
-            hwe_rows.append({
+            hw = s_res.get('hwe', {})
+            af = s_res.get('allele_freqs', {})
+            gc = s_res.get('genotype_counts', {})
+            exp_c = hw.get('expected_counts', {})
+            exp_f = hw.get('expected_freqs', {})
+            
+            ref_a = list(af.keys())[0] if af else 'A'
+            var_a = list(af.keys())[1] if len(af) > 1 else 'a'
+            wt_g = list(gc.keys())[0] if gc else 'AA'
+            het_g = list(gc.keys())[1] if len(gc) > 1 else 'Aa'
+            var_g = list(gc.keys())[2] if len(gc) > 2 else 'aa'
+
+            full_hwe_rows.append({
                 'SNP Variant': snp_name,
-                'Observed Genotypes': obs_str,
-                'Expected Genotypes': exp_str,
-                'Chi2 Stat (χ²)': hw['chi2_stat'],
-                'Chi2 P-Value': hw['p_value'],
-                'Exact Test P-Value': hw['exact_p_value'],
-                'HWE Status': hw['interpretation']
+                'Total Sample Size (N)': s_res.get('valid_samples', 0),
+                f'Dominant p({ref_a})': af.get(ref_a, 0),
+                f'Recessive q({var_a})': af.get(var_a, 0),
+                f'Observed ({wt_g} / {het_g} / {var_g})': f"{gc.get(wt_g, 0)} / {gc.get(het_g, 0)} / {gc.get(var_g, 0)}",
+                f'Expected Freq ({wt_g}:p^2, {het_g}:2pq, {var_g}:q^2)': f"{exp_f.get(wt_g, 0)} / {exp_f.get(het_g, 0)} / {exp_f.get(var_g, 0)}",
+                f'Expected Counts ({wt_g} / {het_g} / {var_g})': f"{exp_c.get(wt_g, 0)} / {exp_c.get(het_g, 0)} / {exp_c.get(var_g, 0)}",
+                'Chi-Square (χ²)': hw.get('chi2_stat', 0),
+                'Degrees of Freedom': hw.get('df', 1),
+                'Chi2 P-Value': hw.get('p_value', 1.0),
+                'Exact Test P-Value': hw.get('exact_p_value', 1.0),
+                'HWE Interpretation': hw.get('interpretation', 'In HWE')
             })
-        st.table(pd.DataFrame(hwe_rows))
+            
+        st.dataframe(pd.DataFrame(full_hwe_rows), use_container_width=True)
+        
+        # 2. Chi-Square Distribution Reference Table (Table 3)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📋 Table 3. Chi-Square Distribution Reference Table (1 Degree of Freedom)")
+        chi2_ref_df = pd.DataFrame([{
+            'Level of Significance (α)': '0.50',
+            '0.10': '2.706',
+            '0.05 (Critical Threshold)': '3.841',
+            '0.02': '5.412',
+            '0.01': '6.635',
+            '0.001': '10.827'
+        }])
+        st.table(chi2_ref_df)
+        
+        st.info("""
+        📌 **HWE Decision Rule (df = 1, α = 0.05, Critical Threshold = 3.841):**
+        * If **$\chi^2 < 3.841$** ($P \ge 0.05$): The Null hypothesis is accepted — The population is in **Hardy-Weinberg Equilibrium**.
+        * If **$\chi^2 \ge 3.841$** ($P < 0.05$): The population is **NOT in Hardy-Weinberg Equilibrium (Departure from HWE)**.
+        """)
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📊 Primary Visual: Observed vs Expected Genotype Frequencies under HWE")
+        st.markdown("### 📊 Primary Visual: Observed vs Expected Genotype Counts under HWE")
         hwe_chart_rows = []
         for snp_name, s_res in snps_data.items():
             obs_dict = s_res['genotype_counts']
@@ -531,7 +568,7 @@ elif nav_option == "⚖️ 6. Hardy-Weinberg Equilibrium":
             for gt in obs_dict.keys():
                 hwe_chart_rows.append({'Genotype': f"{snp_name} ({gt})", 'Category': 'Observed Count', 'Samples': obs_dict.get(gt, 0)})
                 hwe_chart_rows.append({'Genotype': f"{snp_name} ({gt})", 'Category': 'Expected Count (2Npq, Np^2, Nq^2)', 'Samples': exp_dict.get(gt, 0)})
-        fig_hwe = px.bar(pd.DataFrame(hwe_chart_rows), x='Genotype', y='Samples', color='Category', barmode='group', title="Observed vs Expected Genotype Frequencies under HWE")
+        fig_hwe = px.bar(pd.DataFrame(hwe_chart_rows), x='Genotype', y='Samples', color='Category', barmode='group', title="Observed vs Expected Genotype Counts under HWE")
         st.plotly_chart(fig_hwe, use_container_width=True)
 
 # -----------------------------------------------------------------------------
