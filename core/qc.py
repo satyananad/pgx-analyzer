@@ -121,6 +121,8 @@ class DataQCEngine:
                     if pd.isna(val):
                         return np.nan
                     v = str(val).strip().upper().replace('/', '')
+                    if v in ['', 'NAN', 'NONE', 'NULL', 'NA', '?']:
+                        return np.nan
                     if v in ['AG', 'GA']: v = 'GA'
                     if v in ['CT', 'TC']: v = 'CT'
                     
@@ -130,32 +132,46 @@ class DataQCEngine:
 
                 cleaned_vals = raw_vals.apply(clean_genotype)
                 
-                # Detect invalid values
-                invalid_mask = raw_vals.notna() & cleaned_vals.isna()
+                # Detect invalid non-empty values
+                raw_str = raw_vals.astype(str).str.strip().str.upper()
+                raw_not_na = raw_vals.notna() & (~raw_str.isin(['', 'NAN', 'NONE', 'NULL', 'NA', '?']))
+                invalid_mask = raw_not_na & cleaned_vals.isna()
                 invalid_samples = df.loc[invalid_mask, 'Sample_ID'].tolist()
+                invalid_raw_vals = raw_vals.loc[invalid_mask].tolist()
+                
                 if invalid_samples:
-                    invalid_genotypes_log[snp_name] = invalid_samples
+                    invalid_genotypes_log[snp_name] = [
+                        {'sample_id': sid, 'raw_value': rval} 
+                        for sid, rval in zip(invalid_samples, invalid_raw_vals)
+                    ]
                 
                 df[snp_name] = cleaned_vals
                 
                 # Stats per SNP
                 valid_count = df[snp_name].notna().sum()
-                missing_count = df[snp_name].isna().sum()
+                missing_count = len(df) - valid_count - len(invalid_samples)
                 missing_pct = (missing_count / total_input_samples) * 100.0 if total_input_samples > 0 else 0.0
                 
                 snp_qc_stats[snp_name] = {
                     'valid_samples': int(valid_count),
                     'missing_samples': int(missing_count),
+                    'invalid_samples': int(len(invalid_samples)),
                     'missing_pct': round(missing_pct, 2)
                 }
+
+        total_invalid_calls = sum(len(items) for items in invalid_genotypes_log.values())
+        fully_valid = max(0, total_input_samples - len(all_duplicates) - total_invalid_calls)
 
         self.clean_df = df
         self.qc_report = {
             'total_samples': total_input_samples,
+            'fully_valid_samples': fully_valid,
             'duplicate_sample_count': len(all_duplicates),
             'duplicate_sample_ids': all_duplicates,
+            'invalid_genotypes_count': total_invalid_calls,
             'invalid_genotypes_log': invalid_genotypes_log,
             'snp_qc_stats': snp_qc_stats
         }
         
         return self.clean_df, self.qc_report
+
