@@ -1,6 +1,12 @@
 """
 Report Exporter Engine for Multi-Tab Excel, CSV, and PDF Output.
-Generates comprehensive pharmacogenomic analysis reports.
+Generates comprehensive pharmacogenomic analysis reports including:
+1. Full Cleaned Dataset
+2. Overall Population Summary
+3. Regional Tabs (North India, South India, East India, West India)
+4. State-Wise Analysis Summary
+5. Gender Breakdown (Male, Female)
+6. Data QC & Missing Data Audit
 """
 
 import pandas as pd
@@ -91,7 +97,23 @@ class ReportGenerator:
                 reg_df = cls._dict_to_summary_table(reg_data)
                 reg_df.to_excel(writer, sheet_name=sheet_title, index=False)
                 
-            # 4. Gender Tabs
+            # 4. State-Wise Analysis Summary Tab
+            state_results = full_results.get('state_wise', {})
+            st_rows = []
+            for st_name, st_data in state_results.items():
+                cyp2_a = st_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+                pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+                st_rows.append({
+                    'State Name': st_name,
+                    'Sample N': st_data.get('sample_count', 0),
+                    'Missing Data Rate (%)': f"{st_data.get('missing_pct', 0)}%",
+                    'CYP2C19*2 Var Freq (A)': cyp2_a,
+                    'Poor Metabolizers (%)': f"{pm_pct}%"
+                })
+            if st_rows:
+                pd.DataFrame(st_rows).to_excel(writer, sheet_name='State-Wise Summary', index=False)
+
+            # 5. Gender Tabs
             gender_results = full_results.get('gender', {})
             for gen_name, gen_data in gender_results.items():
                 sheet_title = f"Gender_{gen_name}"[:31]
@@ -112,22 +134,22 @@ class ReportGenerator:
             'TitleStyle',
             parent=styles['Heading1'],
             fontSize=18,
-            textColor=colors.HexColor('#1E3A8A'),
+            textColor=colors.HexColor('#0F172A'),
             spaceAfter=12
         )
         heading_style = ParagraphStyle(
             'HeadingStyle',
             parent=styles['Heading2'],
-            fontSize=14,
-            textColor=colors.HexColor('#1E40AF'),
+            fontSize=13,
+            textColor=colors.HexColor('#1E3A8A'),
             spaceBefore=10,
             spaceAfter=8
         )
         body_style = styles['BodyText']
         
         # Title & Subtitle
-        elements.append(Paragraph("Population Pharmacogenomics Analysis Report", title_style))
-        elements.append(Paragraph("Automated Analysis of Genotype, Allele, HWE, and Phenotype Distributions", body_style))
+        elements.append(Paragraph("Population Pharmacogenomics Executive Report", title_style))
+        elements.append(Paragraph("Automated Analysis of Genotype, Allele (p & q), HWE, Geographic Population Groups & Phenotypes", body_style))
         elements.append(Spacer(1, 12))
         
         # Summary Overview Table
@@ -137,22 +159,44 @@ class ReportGenerator:
         table_data = [
             ["Metric", "Value"],
             ["Total Samples Analyzed", str(total_samples)],
-            ["Geographic Subgroups", "North India, South India, East India, West India"],
+            ["Geographic Population Groups", "North India, South India, East India, West India"],
             ["Target Pharmacogene", "CYP2C19 (*2, *3, *17)"]
         ]
         
         t = Table(table_data, colWidths=[200, 300])
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (1, 0), colors.HexColor('#3B82F6')),
+            ('BACKGROUND', (0, 0), (1, 0), colors.HexColor('#0F172A')),
             ('TEXTCOLOR', (0, 0), (1, 0), colors.white),
             ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
             ('BOTTOMPADDING', (0, 0), (1, 0), 6),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F3F4F6')),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB'))
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8FAFC')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1'))
         ]))
         elements.append(t)
-        elements.append(Spacer(1, 16))
+        elements.append(Spacer(1, 14))
         
+        # Geographic Population Groups Section
+        elements.append(Paragraph("Geographic Population Groups Summary", heading_style))
+        regional_results = full_results.get('regional', {})
+        reg_table_data = [["Geographic Group", "Sample N", "CYP2C19*2 Freq (A)", "HWE Status", "PM (%)"]]
+        
+        for r_name in ['North India', 'South India', 'East India', 'West India']:
+            r_data = regional_results.get(r_name, {})
+            cyp2_a = r_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+            hwe_stat = r_data.get('snps', {}).get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE')
+            pm_pct = r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+            reg_table_data.append([r_name, str(r_data.get('sample_count', 0)), str(cyp2_a), hwe_stat, f"{pm_pct}%"])
+            
+        rtable = Table(reg_table_data, colWidths=[120, 80, 110, 100, 90])
+        rtable.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1'))
+        ]))
+        elements.append(rtable)
+        elements.append(Spacer(1, 14))
+
         # Phenotype Breakdown Section
         elements.append(Paragraph("CYP2C19 Phenotype Summary (Overall Population)", heading_style))
         pgx = overall_stats.get('cyp2c19_summary', {}).get('phenotypes', {})
