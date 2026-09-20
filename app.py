@@ -565,38 +565,64 @@ elif nav_option == "🌐 7. Geographic Population Groups":
         st.markdown("### 📊 Comprehensive Regional Statistical Summary Table (Matching Reference Excel)")
         st.caption("Includes exact allele counts, genotype counts, allele frequencies f(A)/f(G)/f(C)/f(T), expected counts, Chi-Square (\\\\chi^2), P-values, and HWE interpretations.")
         
-        # 1. Multi-Row Reference Excel Matrix Table
-        rows_def = [
-            ('A / C Count', lambda c2, c17: (c2.get('allele_counts', {}).get('A', 0), c17.get('allele_counts', {}).get('C', 0))),
-            ('G / T Count', lambda c2, c17: (c2.get('allele_counts', {}).get('G', 0), c17.get('allele_counts', {}).get('T', 0))),
-            ('Total Allele Count', lambda c2, c17: (sum(c2.get('allele_counts', {}).values()), sum(c17.get('allele_counts', {}).values()))),
-            ('GA COUNT / CC COUNT', lambda c2, c17: (c2.get('genotype_counts', {}).get('GA', 0), c17.get('genotype_counts', {}).get('CC', 0))),
-            ('AA COUNT / CT COUNT', lambda c2, c17: (c2.get('genotype_counts', {}).get('AA', 0), c17.get('genotype_counts', {}).get('CT', 0))),
-            ('GG COUNT / TT COUNT', lambda c2, c17: (c2.get('genotype_counts', {}).get('GG', 0), c17.get('genotype_counts', {}).get('TT', 0))),
-            ('Total Sample N', lambda c2, c17: (sum(c2.get('genotype_counts', {}).values()), sum(c17.get('genotype_counts', {}).values()))),
-            ('Allele Freq F(A) / F(C)', lambda c2, c17: (c2.get('allele_freqs', {}).get('A', 0), c17.get('allele_freqs', {}).get('C', 0))),
-            ('Allele Freq F(G) / f(T)', lambda c2, c17: (c2.get('allele_freqs', {}).get('G', 0), c17.get('allele_freqs', {}).get('T', 0))),
-            ('Expected GA / Expected CC', lambda c2, c17: (c2.get('hwe', {}).get('expected_counts', {}).get('GA', 0), c17.get('hwe', {}).get('expected_counts', {}).get('CC', 0))),
-            ('Expected GG / Expected CT', lambda c2, c17: (c2.get('hwe', {}).get('expected_counts', {}).get('GG', 0), c17.get('hwe', {}).get('expected_counts', {}).get('CT', 0))),
-            ('Expected AA / Expected TT', lambda c2, c17: (c2.get('hwe', {}).get('expected_counts', {}).get('AA', 0), c17.get('hwe', {}).get('expected_counts', {}).get('TT', 0))),
-            ('Chi Square (χ²)', lambda c2, c17: (c2.get('hwe', {}).get('chi2_stat', 0), c17.get('hwe', {}).get('chi2_stat', 0))),
-            ('P VALUE', lambda c2, c17: (c2.get('hwe', {}).get('p_value', 1.0), c17.get('hwe', {}).get('p_value', 1.0))),
-            ('HWE Status', lambda c2, c17: (c2.get('hwe', {}).get('interpretation', 'In HWE'), c17.get('hwe', {}).get('interpretation', 'In HWE')))
+        # 1. CYP2C19*2 Dedicated Regional Matrix Table (Alleles A & G)
+        st.markdown("#### 🧬 CYP2C19*2 (rs4244285) Regional Analysis — Alleles A (Variant) & G (Reference)")
+        cyp2_rows = [
+            ('A Count (Variant Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('A', 0)),
+            ('G Count (Reference Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('G', 0)),
+            ('Total Allele Count (2N)', lambda s: sum(s.get('CYP2C19*2', {}).get('allele_counts', {}).values())),
+            ('GA COUNT (Heterozygote)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GA', 0)),
+            ('AA COUNT (Homozygous Variant)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('AA', 0)),
+            ('GG COUNT (Homozygous Wildtype)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GG', 0)),
+            ('Total Sample N', lambda s: sum(s.get('CYP2C19*2', {}).get('genotype_counts', {}).values())),
+            ('Allele Frequency F(A)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)),
+            ('Allele Frequency F(G)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('G', 0)),
+            ('Expected GA Count', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('expected_counts', {}).get('GA', 0)),
+            ('Expected GG Count', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('expected_counts', {}).get('GG', 0)),
+            ('Expected AA Count', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('expected_counts', {}).get('AA', 0)),
+            ('Chi-Square (χ²)', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('chi2_stat', 0)),
+            ('P VALUE', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('p_value', 1.0)),
+            ('HWE Interpretation', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE'))
         ]
-
-        matrix_data = []
-        for label, func in rows_def:
-            r_dict = {'Statistical Parameter': label}
+        
+        cyp2_matrix = []
+        for label, func in cyp2_rows:
+            r_dict = {'Statistical Parameter (*2)': label}
             for r in regions:
-                snps = reg.get(r, {}).get('snps', {})
-                c2 = snps.get('CYP2C19*2', {})
-                c17 = snps.get('CYP2C19*17', {})
-                v2, v17 = func(c2, c17)
-                r_dict[f'{r} (*2)'] = v2
-                r_dict[f'{r} (*17)'] = v17
-            matrix_data.append(r_dict)
+                r_dict[r] = func(reg.get(r, {}).get('snps', {}))
+            cyp2_matrix.append(r_dict)
+            
+        st.dataframe(pd.DataFrame(cyp2_matrix), use_container_width=True)
 
-        st.dataframe(pd.DataFrame(matrix_data), use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        # 2. CYP2C19*17 Dedicated Regional Matrix Table (Alleles C & T)
+        st.markdown("#### 🧬 CYP2C19*17 (rs12248560) Regional Analysis — Alleles C (Reference) & T (Variant)")
+        cyp17_rows = [
+            ('C Count (Reference Allele)', lambda s: s.get('CYP2C19*17', {}).get('allele_counts', {}).get('C', 0)),
+            ('T Count (Variant Allele)', lambda s: s.get('CYP2C19*17', {}).get('allele_counts', {}).get('T', 0)),
+            ('Total Allele Count (2N)', lambda s: sum(s.get('CYP2C19*17', {}).get('allele_counts', {}).values())),
+            ('CC COUNT (Homozygous Wildtype)', lambda s: s.get('CYP2C19*17', {}).get('genotype_counts', {}).get('CC', 0)),
+            ('CT COUNT (Heterozygote)', lambda s: s.get('CYP2C19*17', {}).get('genotype_counts', {}).get('CT', 0)),
+            ('TT COUNT (Homozygous Variant)', lambda s: s.get('CYP2C19*17', {}).get('genotype_counts', {}).get('TT', 0)),
+            ('Total Sample N', lambda s: sum(s.get('CYP2C19*17', {}).get('genotype_counts', {}).values())),
+            ('Allele Frequency F(C)', lambda s: s.get('CYP2C19*17', {}).get('allele_freqs', {}).get('C', 0)),
+            ('Allele Frequency f(T)', lambda s: s.get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0)),
+            ('Expected CC Count', lambda s: s.get('CYP2C19*17', {}).get('hwe', {}).get('expected_counts', {}).get('CC', 0)),
+            ('Expected CT Count', lambda s: s.get('CYP2C19*17', {}).get('hwe', {}).get('expected_counts', {}).get('CT', 0)),
+            ('Expected TT Count', lambda s: s.get('CYP2C19*17', {}).get('hwe', {}).get('expected_counts', {}).get('TT', 0)),
+            ('Chi-Square (χ²)', lambda s: s.get('CYP2C19*17', {}).get('hwe', {}).get('chi2_stat', 0)),
+            ('P VALUE', lambda s: s.get('CYP2C19*17', {}).get('hwe', {}).get('p_value', 1.0)),
+            ('HWE Interpretation', lambda s: s.get('CYP2C19*17', {}).get('hwe', {}).get('interpretation', 'In HWE'))
+        ]
+        
+        cyp17_matrix = []
+        for label, func in cyp17_rows:
+            r_dict = {'Statistical Parameter (*17)': label}
+            for r in regions:
+                r_dict[r] = func(reg.get(r, {}).get('snps', {}))
+            cyp17_matrix.append(r_dict)
+            
+        st.dataframe(pd.DataFrame(cyp17_matrix), use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### 🗺️ Individual Geographic Region Profiles & Separate Regional Visualizations")
