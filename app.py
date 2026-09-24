@@ -255,6 +255,7 @@ def reset_all_data():
     st.session_state['is_deleted'] = True
     st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
     st.session_state['mapped_cols'] = {}
+    st.session_state['workflow_step'] = '1 · Upload'
     
     # Write persistent disk marker so deletion survives app restarts, browser refreshes, and new tabs
     try:
@@ -575,7 +576,7 @@ def render_unified_results(full_results: dict, qc_report: dict):
 # -----------------------------------------------------------------------------
 def render_workflow_pipeline(df_raw, full_results, qc_report):
     if 'workflow_step' not in st.session_state:
-        st.session_state['workflow_step'] = '3 · Results' if has_active_data() else '1 · Upload'
+        st.session_state['workflow_step'] = '1 · Upload'
 
     step_cols = st.columns(3)
     t1 = "primary" if st.session_state['workflow_step'] == '1 · Upload' else "secondary"
