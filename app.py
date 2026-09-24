@@ -150,6 +150,29 @@ CUSTOM_CSS = """
         margin-top: 0.3rem;
     }
 
+    /* Table Clean Border Header Styling matching Screenshots 1, 2, 3 */
+    div[data-testid="stTable"] table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+    div[data-testid="stTable"] th {
+        border-top: 1.5px solid #0F172A !important;
+        border-bottom: 1.5px solid #0F172A !important;
+        background-color: transparent !important;
+        color: #0F172A !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.05em !important;
+        padding: 0.6rem 0.8rem !important;
+    }
+    div[data-testid="stTable"] td {
+        border-bottom: 1px solid #E2E8F0 !important;
+        padding: 0.55rem 0.8rem !important;
+        font-size: 0.88rem !important;
+        color: #1E293B !important;
+    }
+
     /* Sub-cohort Horizontal Radio Pills Styling (Matching Screenshot 4 & 5) */
     div[role="radiogroup"] {
         gap: 0.5rem !important;
@@ -524,20 +547,26 @@ def render_unified_results(full_results: dict, qc_report: dict):
         with c_dip_chart:
             dip_fig_df = pd.DataFrame([{'Diplotype': k, 'Count': v['count']} for k, v in dips.items() if v['count'] > 0])
             fig_dip = px.bar(dip_fig_df, x='Count', y='Diplotype', orientation='h', title="Diplotype counts", color_discrete_sequence=['#166534'])
-            fig_dip.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            fig_dip.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20), yaxis=dict(autorange="reversed"))
             st.plotly_chart(fig_dip, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         c_phe, c_phe_chart = st.columns([1.1, 0.9])
         with c_phe:
             st.markdown("#### Metabolizer / phenotype classification")
-            phe_rows = [{'PHENOTYPE': k.replace(' Metabolizer', ''), 'COUNT': v['count'], 'PERCENTAGE': f"{v['percentage']:.1f}%"} for k, v in phenos.items() if v['count'] > 0]
+            phe_rows = [{'PHENOTYPE': k, 'COUNT': v['count'], 'PERCENTAGE': f"{v['percentage']:.1f}%"} for k, v in phenos.items() if v['count'] > 0]
             st.table(pd.DataFrame(phe_rows))
             
         with c_phe_chart:
-            phe_labels = [k.replace(' Metabolizer', '') for k, v in phenos.items() if v['count'] > 0]
+            phe_labels = [k for k, v in phenos.items() if v['count'] > 0]
             phe_counts = [v['count'] for k, v in phenos.items() if v['count'] > 0]
-            fig_donut = px.pie(names=phe_labels, values=phe_counts, hole=0.5, title="Phenotype distribution", color_discrete_sequence=px.colors.qualitative.Dark24)
+            fig_donut = px.pie(
+                names=phe_labels, 
+                values=phe_counts, 
+                hole=0.5, 
+                title="Phenotype distribution", 
+                color_discrete_sequence=['#166534', '#1E40AF', '#4B5563', '#991B1B', '#D97706', '#0D9488']
+            )
             fig_donut.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
             st.plotly_chart(fig_donut, use_container_width=True)
 

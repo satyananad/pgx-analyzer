@@ -147,26 +147,28 @@ SNP_CONFIG: Dict[str, Dict] = {
 # 3. CPIC CYP2C19 DIPLOTYPE TO PHENOTYPE MAPPING MATRIX
 # -----------------------------------------------------------------------------
 DIPLOTYPE_PHENOTYPE_MAP: Dict[str, str] = {
-    '*1/*1': 'Normal Metabolizer (NM)',
-    '*1/*17': 'Rapid Metabolizer (RM)',
-    '*17/*17': 'Ultrarapid Metabolizer (UM)',
-    '*1/*2': 'Intermediate Metabolizer (IM)',
-    '*1/*3': 'Intermediate Metabolizer (IM)',
-    '*2/*17': 'Intermediate Metabolizer (IM)',
-    '*3/*17': 'Intermediate Metabolizer (IM)',
-    '*2/*2': 'Poor Metabolizer (PM)',
-    '*2/*3': 'Poor Metabolizer (PM)',
-    '*3/*3': 'Poor Metabolizer (PM)',
+    '*1/*1': 'Normal Metabolizer',
+    '*1/*17': 'Rapid Metabolizer',
+    '*17/*17': 'Ultrarapid Metabolizer',
+    '*1/*2': 'Intermediate Metabolizer',
+    '*1/*3': 'Intermediate Metabolizer',
+    '*17/*2': 'Indeterminate',
+    '*2/*17': 'Indeterminate',
+    '*3/*17': 'Indeterminate',
+    '*17/*3': 'Indeterminate',
+    '*2/*2': 'Poor Metabolizer',
+    '*2/*3': 'Poor Metabolizer',
+    '*3/*3': 'Poor Metabolizer',
     'Indeterminate': 'Indeterminate'
 }
 
 PHENOTYPE_ORDER: List[str] = [
-    'Ultrarapid Metabolizer (UM)',
-    'Rapid Metabolizer (RM)',
-    'Normal Metabolizer (NM)',
-    'Intermediate Metabolizer (IM)',
-    'Poor Metabolizer (PM)',
-    'Indeterminate'
+    'Intermediate Metabolizer',
+    'Normal Metabolizer',
+    'Indeterminate',
+    'Poor Metabolizer',
+    'Rapid Metabolizer',
+    'Ultrarapid Metabolizer'
 ]
 
 ALPHA_SIGNIFICANCE: float = 0.05
