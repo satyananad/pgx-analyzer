@@ -423,14 +423,35 @@ def render_unified_results(full_results: dict, qc_report: dict):
         with c_ov1:
             st.markdown("### 🏆 CYP2C19 Phenotype Summary")
             pgx = ov.get('cyp2c19_summary', {})
-            phe_df = pd.DataFrame([{'Phenotype Category': k, 'Count': v['count'], 'Percentage': f"{v['percentage']:.1f}%"} for k, v in pgx.get('phenotypes', {}).items() if v['count'] > 0])
+            phe_dict = pgx.get('phenotypes', {})
+            phe_df = pd.DataFrame([{'Phenotype Category': k, 'Count': v['count'], 'Percentage': f"{v['percentage']:.1f}%"} for k, v in phe_dict.items() if v['count'] > 0])
             st.table(phe_df)
+
+            fig_ov_phe = px.pie(
+                names=[k for k, v in phe_dict.items() if v['count'] > 0],
+                values=[v['count'] for k, v in phe_dict.items() if v['count'] > 0],
+                hole=0.45,
+                title="Overall Phenotype Distribution",
+                color_discrete_sequence=['#166534', '#1E40AF', '#4B5563', '#991B1B', '#D97706', '#0D9488']
+            )
+            fig_ov_phe.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            st.plotly_chart(fig_ov_phe, use_container_width=True)
 
         with c_ov2:
             st.markdown("### 🌐 Regional Sample Distribution")
             reg = full_results.get('regional', {})
             reg_df = pd.DataFrame([{'Region': r, 'Sample Count (N)': r_data.get('sample_count', 0), '% of Cohort': f"{(r_data.get('sample_count', 0)/tot_samples*100):.1f}%" if tot_samples>0 else "0%"} for r, r_data in reg.items()])
             st.table(reg_df)
+
+            reg_chart_df = pd.DataFrame([{'Region': r, 'Samples (N)': r_data.get('sample_count', 0)} for r, r_data in reg.items()])
+            fig_ov_reg = px.bar(
+                reg_chart_df, x='Region', y='Samples (N)',
+                title="Regional Population Group Sizes",
+                color='Region',
+                color_discrete_sequence=px.colors.qualitative.Set2
+            )
+            fig_ov_reg.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            st.plotly_chart(fig_ov_reg, use_container_width=True)
 
     # -------------------------------------------------------------------------
     # TAB 2: GENOTYPE & ALLELE
@@ -510,8 +531,18 @@ def render_unified_results(full_results: dict, qc_report: dict):
                         color='Genotype',
                         color_discrete_sequence=['#15803D', '#1D4ED8', '#B91C1C']
                     )
-                    fig_bar.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+                    fig_bar.update_layout(height=220, margin=dict(l=20, r=20, t=35, b=20))
                     st.plotly_chart(fig_bar, use_container_width=True)
+
+                    al_df = pd.DataFrame([{'Allele': k, 'Frequency (%)': a_p.get(k, 0)} for k in a_c.keys()])
+                    fig_al = px.bar(
+                        al_df, x='Allele', y='Frequency (%)',
+                        title=f"{snp_code} Allele Frequencies ({sel_key})",
+                        color='Allele',
+                        color_discrete_sequence=['#0D9488', '#D97706']
+                    )
+                    fig_al.update_layout(height=200, margin=dict(l=20, r=20, t=35, b=20))
+                    st.plotly_chart(fig_al, use_container_width=True)
 
     # -------------------------------------------------------------------------
     # TAB 3: HARDY-WEINBERG
@@ -537,7 +568,25 @@ def render_unified_results(full_results: dict, qc_report: dict):
                 'Exact Test P-Value': hw.get('exact_p_value', 1.0),
                 'Interpretation': hw.get('interpretation', 'In HWE')
             })
-        st.table(pd.DataFrame(hwe_table_rows))
+            
+        c_hwe_tbl, c_hwe_fig = st.columns([1.2, 0.8])
+        with c_hwe_tbl:
+            st.table(pd.DataFrame(hwe_table_rows))
+
+        with c_hwe_fig:
+            chi2_chart_df = pd.DataFrame([
+                {'SNP': snp_name, 'Chi2 Stat': s_res.get('hwe', {}).get('chi2_stat', 0)}
+                for snp_name, s_res in snps_data.items()
+            ])
+            fig_hwe = px.bar(
+                chi2_chart_df, x='SNP', y='Chi2 Stat',
+                title=f"HWE Chi-Square (χ²) Stats vs Threshold 3.841 ({sel_key})",
+                color='SNP',
+                color_discrete_sequence=['#2563EB', '#7C3AED', '#DB2777']
+            )
+            fig_hwe.add_hline(y=3.841, line_dash="dash", line_color="red", annotation_text="Critical Threshold (3.841)")
+            fig_hwe.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            st.plotly_chart(fig_hwe, use_container_width=True)
         
         st.markdown("##### Table 3. Chi-Square Distribution Reference Table (df = 1, α = 0.05, Critical = 3.841)")
         chi2_ref_df = pd.DataFrame([{
@@ -570,7 +619,24 @@ def render_unified_results(full_results: dict, qc_report: dict):
             {'GROUP': 'Gender — Female', 'N': gen_dict.get('Female', {}).get('sample_count', 0), '% OF TOTAL': f"{(gen_dict.get('Female', {}).get('sample_count', 0)/tot_n*100):.1f}%" if tot_n>0 else "0%"},
             {'GROUP': 'Gender — Male', 'N': gen_dict.get('Male', {}).get('sample_count', 0), '% OF TOTAL': f"{(gen_dict.get('Male', {}).get('sample_count', 0)/tot_n*100):.1f}%" if tot_n>0 else "0%"},
         ]
-        st.table(pd.DataFrame(group_rows))
+        
+        c_pop1, c_pop2 = st.columns([1.0, 1.0])
+        with c_pop1:
+            st.table(pd.DataFrame(group_rows))
+
+        with c_pop2:
+            pop_chart_df = pd.DataFrame([
+                {'Group': r['GROUP'], 'N': r['N']}
+                for r in group_rows if r['GROUP'] != 'Overall'
+            ])
+            fig_pop = px.bar(
+                pop_chart_df, x='N', y='Group', orientation='h',
+                title="Population Subgroup Sizes (N)",
+                color='Group',
+                color_discrete_sequence=px.colors.qualitative.Bold
+            )
+            fig_pop.update_layout(height=320, margin=dict(l=20, r=20, t=35, b=20), yaxis=dict(autorange="reversed"))
+            st.plotly_chart(fig_pop, use_container_width=True)
 
     # -------------------------------------------------------------------------
     # TAB 5: CYP2C19 CALLING
@@ -633,18 +699,34 @@ def render_unified_results(full_results: dict, qc_report: dict):
                     inv_log_rows.append({'SNP Variant': snp, 'Sample ID': item['sample_id'], 'Raw Invalid Genotype Value': item['raw_value'], 'Audit Action': 'Quarantined & Excluded'})
             st.table(pd.DataFrame(inv_log_rows))
 
-        st.markdown("#### Per-SNP Quality Control & Missing Values Table")
-        qc_rows = []
-        for snp, sdata in qc_report['snp_qc_stats'].items():
-            qc_rows.append({
-                'SNP Variant': snp,
-                'Valid Samples': sdata['valid_samples'],
-                'Missing Genotypes Count': sdata['missing_samples'],
-                'Invalid Genotypes Count': sdata.get('invalid_samples', 0),
-                'Missing Data Rate (%)': f"{sdata['missing_pct']:.1f}%",
-                'Quality Audit Status': 'PASS' if sdata.get('invalid_samples', 0) == 0 else 'WARNING'
-            })
-        st.table(pd.DataFrame(qc_rows))
+        c_qc_tbl, c_qc_fig = st.columns([1.1, 0.9])
+        with c_qc_tbl:
+            st.markdown("#### Per-SNP Quality Control & Missing Values Table")
+            qc_rows = []
+            for snp, sdata in qc_report['snp_qc_stats'].items():
+                qc_rows.append({
+                    'SNP Variant': snp,
+                    'Valid Samples': sdata['valid_samples'],
+                    'Missing Genotypes Count': sdata['missing_samples'],
+                    'Invalid Genotypes Count': sdata.get('invalid_samples', 0),
+                    'Missing Data Rate (%)': f"{sdata['missing_pct']:.1f}%",
+                    'Quality Audit Status': 'PASS' if sdata.get('invalid_samples', 0) == 0 else 'WARNING'
+                })
+            st.table(pd.DataFrame(qc_rows))
+
+        with c_qc_fig:
+            qc_fig_df = pd.DataFrame([
+                {'SNP': snp, 'Valid': sdata['valid_samples'], 'Missing': sdata['missing_samples'], 'Invalid': sdata.get('invalid_samples', 0)}
+                for snp, sdata in qc_report['snp_qc_stats'].items()
+            ])
+            fig_qc = px.bar(
+                qc_fig_df, x='SNP', y=['Valid', 'Missing', 'Invalid'],
+                title="Sample Quality Audit Breakdown per SNP",
+                barmode='stack',
+                color_discrete_sequence=['#16A34A', '#EAB308', '#DC2626']
+            )
+            fig_qc.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            st.plotly_chart(fig_qc, use_container_width=True)
 
     # -------------------------------------------------------------------------
     # TAB 7: GEOGRAPHIC POPULATION GROUPS
@@ -670,6 +752,39 @@ def render_unified_results(full_results: dict, qc_report: dict):
                 """, unsafe_allow_html=True)
                 
         st.markdown("<br>", unsafe_allow_html=True)
+
+        c_geo1, c_geo2 = st.columns(2)
+        with c_geo1:
+            geo_var_df = pd.DataFrame([
+                {'Region': r, 'CYP2C19*2 Variant Freq f(A)': reg.get(r, {}).get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)}
+                for r in regions
+            ])
+            fig_geo_var = px.bar(
+                geo_var_df, x='Region', y='CYP2C19*2 Variant Freq f(A)',
+                title="CYP2C19*2 Variant Frequency f(A) by Region",
+                color='Region',
+                color_discrete_sequence=px.colors.qualitative.Dark24
+            )
+            fig_geo_var.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            st.plotly_chart(fig_geo_var, use_container_width=True)
+
+        with c_geo2:
+            geo_pm_df = pd.DataFrame([
+                {
+                    'Region': r, 
+                    'Poor Metabolizer %': reg.get(r, {}).get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', reg.get(r, {}).get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)
+                }
+                for r in regions
+            ])
+            fig_geo_pm = px.bar(
+                geo_pm_df, x='Region', y='Poor Metabolizer %',
+                title="Poor Metabolizers (PM %) by Region",
+                color='Region',
+                color_discrete_sequence=px.colors.qualitative.Vivid
+            )
+            fig_geo_pm.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+            st.plotly_chart(fig_geo_pm, use_container_width=True)
+
         st.markdown("#### Comprehensive Regional Statistical Summary Table")
         
         cyp2_rows = [
@@ -724,9 +839,37 @@ def render_unified_results(full_results: dict, qc_report: dict):
             if p_name in f_phenos:
                 pheno_chart_df.append({'Gender': 'Female', 'Phenotype': p_name.split(' (')[0], 'Count': f_phenos[p_name]['count']})
                 
-        if pheno_chart_df:
-            fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes Comparison (Male vs Female)")
-            st.plotly_chart(fig_g2, use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        cg1, cg2 = st.columns(2)
+        with cg1:
+            if pheno_chart_df:
+                fig_g2 = px.bar(
+                    pd.DataFrame(pheno_chart_df), 
+                    x='Phenotype', y='Count', 
+                    color='Gender', barmode='group', 
+                    title="Metabolizer Phenotypes Comparison (Male vs Female)",
+                    color_discrete_sequence=['#2563EB', '#EC4899']
+                )
+                fig_g2.update_layout(height=280, margin=dict(l=20, r=20, t=35, b=20))
+                st.plotly_chart(fig_g2, use_container_width=True)
+
+        with cg2:
+            m_snps = male.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
+            f_snps = female.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
+            gen_gt_df = []
+            for gt in ['GG', 'GA', 'AA']:
+                if gt in m_snps:
+                    gen_gt_df.append({'Gender': 'Male', 'Genotype': gt, 'Count': m_snps[gt]})
+                if gt in f_snps:
+                    gen_gt_df.append({'Gender': 'Female', 'Genotype': gt, 'Count': f_snps[gt]})
+            if gen_gt_df:
+                fig_gen_gt = px.bar(
+                    pd.DataFrame(gen_gt_df), x='Genotype', y='Count', color='Gender', barmode='group',
+                    title="CYP2C19*2 Genotypes Comparison (Male vs Female)",
+                    color_discrete_sequence=['#2563EB', '#EC4899']
+                )
+                fig_gen_gt.update_layout(height=280, margin=dict(l=20, r=20, t=35, b=20))
+                st.plotly_chart(fig_gen_gt, use_container_width=True)
 
     # -------------------------------------------------------------------------
     # TAB 9: DEDICATED STATE-WISE PAGES
@@ -747,6 +890,33 @@ def render_unified_results(full_results: dict, qc_report: dict):
             sk3.metric("CYP2C19*2 Var Freq", cyp2_freq)
             pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)
             sk4.metric("Poor Metabolizers %", f"{pm_pct:.1f}%")
+
+            st_phenos = st_data.get('cyp2c19_summary', {}).get('phenotypes', {})
+            st_snps = st_data.get('snps', {}).get('CYP2C19*2', {}).get('genotype_counts', {})
+            
+            cs1, cs2 = st.columns(2)
+            with cs1:
+                st_gt_df = pd.DataFrame([{'Genotype': k, 'Count': v} for k, v in st_snps.items()])
+                if not st_gt_df.empty:
+                    fig_st_gt = px.bar(
+                        st_gt_df, x='Genotype', y='Count',
+                        title=f"{selected_st} — CYP2C19*2 Genotypes",
+                        color='Genotype',
+                        color_discrete_sequence=['#16A34A', '#2563EB', '#DC2626']
+                    )
+                    fig_st_gt.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+                    st.plotly_chart(fig_st_gt, use_container_width=True)
+
+            with cs2:
+                st_phe_df = pd.DataFrame([{'Phenotype': k.split(' (')[0], 'Count': v['count']} for k, v in st_phenos.items() if v['count'] > 0])
+                if not st_phe_df.empty:
+                    fig_st_phe = px.pie(
+                        st_phe_df, names='Phenotype', values='Count', hole=0.45,
+                        title=f"{selected_st} — Metabolizer Phenotypes",
+                        color_discrete_sequence=['#166534', '#1E40AF', '#4B5563', '#991B1B', '#D97706', '#0D9488']
+                    )
+                    fig_st_phe.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
+                    st.plotly_chart(fig_st_phe, use_container_width=True)
 
 # -----------------------------------------------------------------------------
 # 3-STEP WORKFLOW PIPELINE RENDERER (EXACT MATCH FOR USER SCREENSHOTS 1, 2, 3, 4, 5)
