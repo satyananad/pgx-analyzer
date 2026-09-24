@@ -147,37 +147,115 @@ CUSTOM_CSS = """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 2. SESSION STATE MANAGEMENT & DATA RESET UTILITIES
+# 2. SESSION STATE MANAGEMENT & FAST PIPELINE CACHING
 # -----------------------------------------------------------------------------
+DELETED_FLAG_FILE = ".data_deleted.flag"
+
+if os.path.exists(DELETED_FLAG_FILE):
+    st.session_state['is_deleted'] = True
+
+if 'is_deleted' not in st.session_state:
+    st.session_state['is_deleted'] = False
+
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
+
 if 'mapped_cols' not in st.session_state:
     st.session_state['mapped_cols'] = {}
 
 demo_file_path = "categorized by state into North, South, East, West .xlsx"
-if st.session_state['uploaded_df'] is None and os.path.exists(demo_file_path):
-    st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
+
+EMPTY_COLS = [
+    'sample ID', 'Gender', 'Date of Birth', 'Native place ', 'State',
+    'Test requested', 'Is their family lived at Native place for past 3 generations?',
+    'CYP2C19*2 (rs4244285)', 'CYP2C19*3 (rs4986893)', 'CYP2C19*17 ( rs12248560)'
+]
+
+# Only load demo dataset on initial cold start IF data has NOT been permanently deleted
+if st.session_state['uploaded_df'] is None:
+    if not st.session_state['is_deleted'] and os.path.exists(demo_file_path):
+        st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
+    else:
+        st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
 
 db_manager = DatabaseManager()
 
+def clear_deletion_flag():
+    """Clears the disk-based permanent deletion marker file and purges cache."""
+    st.session_state['is_deleted'] = False
+    if os.path.exists(DELETED_FLAG_FILE):
+        try:
+            os.remove(DELETED_FLAG_FILE)
+        except Exception:
+            pass
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+
 def reset_all_data():
-    """Clears session dataset, resets custom column mappings, and purges database."""
-    empty_cols = [
-        'sample ID', 'Gender', 'Date of Birth', 'Native place ', 'State',
-        'Test requested', 'Is their family lived at Native place for past 3 generations?',
-        'CYP2C19*2 (rs4244285)', 'CYP2C19*3 (rs4986893)', 'CYP2C19*17 ( rs12248560)'
-    ]
-    st.session_state['uploaded_df'] = pd.DataFrame(columns=empty_cols)
+    """Clears session dataset, resets custom column mappings, creates permanent deletion marker, and purges database & cache."""
+    st.session_state['is_deleted'] = True
+    st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
     st.session_state['mapped_cols'] = {}
+    
+    # Write persistent disk marker so deletion survives app restarts, browser refreshes, and new tabs
+    try:
+        with open(DELETED_FLAG_FILE, "w") as f:
+            f.write("deleted")
+    except Exception:
+        pass
+
     try:
         db_manager.clear_database()
     except Exception:
         pass
 
-existing_sample_ids = db_manager.get_existing_sample_ids()
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+
+def reload_demo_data():
+    """Explicitly reloads the demo dataset, removes deletion flag, and resets cache."""
+    clear_deletion_flag()
+    st.session_state['mapped_cols'] = {}
+    if os.path.exists(demo_file_path):
+        st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
+    else:
+        st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
+
+# High performance in-memory cached analysis execution pipeline
+@st.cache_data(show_spinner=False)
+def run_fast_pipeline(df: pd.DataFrame, mapped_cols_tuple: tuple):
+    mapped_dict = dict(mapped_cols_tuple)
+    if df is None or len(df) == 0:
+        clean_df = pd.DataFrame()
+        qc_report = {
+            'total_samples': 0,
+            'fully_valid_samples': 0,
+            'duplicate_sample_count': 0,
+            'duplicate_sample_ids': [],
+            'invalid_genotypes_count': 0,
+            'invalid_genotypes_log': {},
+            'snp_qc_stats': {}
+        }
+        full_results = {
+            'overall': {'sample_count': 0, 'snps': {}, 'cyp2c19_summary': {'phenotypes': {}, 'diplotypes': {}}},
+            'regional': {},
+            'state_wise': {},
+            'gender': {},
+            'processed_dataframe': pd.DataFrame()
+        }
+        return clean_df, qc_report, full_results
+
+    qc_engine = DataQCEngine(df, custom_col_mapping=mapped_dict)
+    clean_df, qc_report = qc_engine.run_qc()
+    full_results = DemographicStratifier.stratify_and_analyze(clean_df)
+    return clean_df, qc_report, full_results
 
 # -----------------------------------------------------------------------------
-# 3. SIDEBAR NAVIGATION MENU (CLEAN 10-PAGE NON-DUPLICATED NAVIGATION)
+# 3. SIDEBAR NAVIGATION MENU (CLEAN 10-PAGE NAVIGATION)
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=64)
@@ -212,30 +290,17 @@ with st.sidebar:
 
     if os.path.exists(demo_file_path):
         if st.button("🔄 Reload Demo Dataset (1,044 Samples)", use_container_width=True):
-            st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-            st.session_state['mapped_cols'] = {}
+            reload_demo_data()
             st.success("Loaded workspace dataset!")
             st.rerun()
 
-# Run Pipeline Analysis
+# Execute Pipeline
 df_raw = st.session_state['uploaded_df']
-clean_df = None
-qc_report = None
-full_results = None
-processed_df = None
+mapped_tuple = tuple(sorted(st.session_state['mapped_cols'].items()))
+clean_df, qc_report, full_results = run_fast_pipeline(df_raw, mapped_tuple)
+processed_df = full_results.get('processed_dataframe', pd.DataFrame())
 
-if df_raw is not None:
-    qc_engine = DataQCEngine(df_raw, existing_sample_ids=existing_sample_ids, custom_col_mapping=st.session_state['mapped_cols'])
-    clean_df, qc_report = qc_engine.run_qc()
-    full_results = DemographicStratifier.stratify_and_analyze(clean_df)
-    processed_df = full_results['processed_dataframe']
-    try:
-        if len(processed_df) > 0:
-            db_manager.insert_batch(processed_df)
-    except Exception:
-        pass
-
-# Helper to check if current workspace has valid active sample records
+# Helper to check active dataset state
 def has_active_data() -> bool:
     if full_results is None or 'overall' not in full_results:
         return False
@@ -465,7 +530,9 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
                     df_load = pd.read_csv(file_upload)
                 else:
                     df_load = pd.read_excel(file_upload)
+                clear_deletion_flag()
                 st.session_state['uploaded_df'] = df_load
+                st.session_state['mapped_cols'] = {}
                 st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
                 st.rerun()
             except Exception as e:
@@ -486,8 +553,7 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
         with col_act2:
             if os.path.exists(demo_file_path):
                 if st.button("🔄 Reload Demo Data", use_container_width=True):
-                    st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-                    st.session_state['mapped_cols'] = {}
+                    reload_demo_data()
                     st.success("Demo data loaded!")
                     st.rerun()
 
@@ -612,6 +678,7 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
                 'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
             }
             
+            clear_deletion_flag()
             if st.session_state['uploaded_df'] is not None and len(st.session_state['uploaded_df']) > 0:
                 st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
             else:
@@ -619,6 +686,38 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
                 
             st.success(f"Sample {in_sid} added successfully!")
             st.rerun()
+
+    st.divider()
+
+    # SECTION 4: SELECTIVE SAMPLE DELETION / DATA MANAGEMENT
+    st.markdown("### 🗑️ Manage & Delete Specific Sample Records")
+    st.caption("Permanently delete individual or multiple selected sample records from your active dataset.")
+    
+    if df_raw is not None and len(df_raw) > 0:
+        sid_col_candidates = [c for c in df_raw.columns if 'sample' in str(c).lower() or 'id' in str(c).lower()]
+        target_sid_col = sid_col_candidates[0] if sid_col_candidates else df_raw.columns[0]
+        
+        sample_list = list(df_raw[target_sid_col].astype(str).unique())
+        selected_to_delete = st.multiselect("Select Sample ID(s) to Delete Permanently:", sample_list, key="delete_multiselect")
+        
+        if st.button("❌ Permanently Delete Selected Samples", type="secondary"):
+            if selected_to_delete:
+                st.session_state['uploaded_df'] = df_raw[~df_raw[target_sid_col].astype(str).isin(selected_to_delete)].reset_index(drop=True)
+                for sid in selected_to_delete:
+                    try:
+                        db_manager.delete_sample_by_id(sid)
+                    except Exception:
+                        pass
+                try:
+                    st.cache_data.clear()
+                except Exception:
+                    pass
+                st.success(f"Permanently deleted {len(selected_to_delete)} sample record(s)!")
+                st.rerun()
+            else:
+                st.warning("Please select at least one sample ID to delete.")
+    else:
+        st.info("ℹ️ No active sample records available to delete.")
 
 # -----------------------------------------------------------------------------
 # VIEW 2: EXECUTIVE DASHBOARD (MATCHING SCREENSHOTS 1, 2, 3, 4)

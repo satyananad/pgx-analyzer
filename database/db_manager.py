@@ -124,9 +124,17 @@ class DatabaseManager:
                 })
             return df
 
+    def delete_sample_by_id(self, sample_id: str):
+        """Deletes a specific sample record by sample_id from database."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM samples WHERE sample_id = ?", (str(sample_id).strip(),))
+            conn.commit()
+
     def clear_database(self):
         """Clears all records from database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM samples")
             conn.commit()
+            cursor.execute("VACUUM")
