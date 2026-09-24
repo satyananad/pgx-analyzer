@@ -220,8 +220,6 @@ if 'uploaded_df' not in st.session_state:
 if 'mapped_cols' not in st.session_state:
     st.session_state['mapped_cols'] = {}
 
-demo_file_path = "categorized by state into North, South, East, West .xlsx"
-
 EMPTY_COLS = [
     'sample ID', 'Gender', 'Date of Birth', 'Native place ', 'State',
     'Test requested', 'Is their family lived at Native place for past 3 generations?',
@@ -271,15 +269,6 @@ def reset_all_data():
     except Exception:
         pass
 
-def reload_demo_data():
-    """Explicitly reloads the demo dataset, removes deletion flag, and resets cache."""
-    clear_deletion_flag()
-    st.session_state['mapped_cols'] = {}
-    if os.path.exists(demo_file_path):
-        st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-    else:
-        st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
-
 # High performance in-memory cached analysis execution pipeline
 @st.cache_data(show_spinner=False)
 def run_fast_pipeline(df: pd.DataFrame, mapped_cols_tuple: tuple):
@@ -318,17 +307,11 @@ with st.sidebar:
     st.caption("Automated Population Pharmacogenomics Platform")
     
     st.divider()
-    st.markdown("### Data Management")
-    if st.button("🗑️ Delete Existing Data (Start Fresh)", type="secondary", use_container_width=True):
+    st.markdown("### Workspace Control")
+    if st.button("🗑️ Reset Workspace (Start Fresh)", type="secondary", use_container_width=True):
         reset_all_data()
-        st.success("All existing data deleted! Workspace reset to 0 samples.")
+        st.success("Workspace reset to 0 samples.")
         st.rerun()
-
-    if os.path.exists(demo_file_path):
-        if st.button("🔄 Reload Demo Dataset (1,044 Samples)", use_container_width=True):
-            reload_demo_data()
-            st.success("Loaded workspace dataset!")
-            st.rerun()
 
 # Execute Pipeline
 df_raw = st.session_state['uploaded_df']
@@ -986,20 +969,13 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
 
         st.divider()
 
-        with st.expander("🛠️ Advanced Workspace Actions: Reload Demo Data, Manual Entry & Deletion", expanded=False):
-            c1, c2 = st.columns(2)
-            with c1:
-                if os.path.exists(demo_file_path):
-                    if st.button("🔄 Reload Demo Dataset (1,044 Samples)", use_container_width=True, key="btn_exp_demo"):
-                        reload_demo_data()
-                        st.session_state['workflow_step'] = '3 · Results'
-                        st.success("Demo dataset loaded!")
-                        st.rerun()
-            with c2:
-                if st.button("🗑️ Delete Data (Reset)", use_container_width=True, key="btn_exp_reset"):
-                    reset_all_data()
-                    st.success("All data cleared!")
-                    st.rerun()
+        with st.expander("🛠️ Advanced Workspace Actions & Manual Record Entry", expanded=False):
+            if st.button("🗑️ Reset Workspace (Start Fresh)", type="secondary", use_container_width=True, key="btn_exp_reset"):
+                reset_all_data()
+                st.success("Workspace reset to 0 samples.")
+                st.rerun()
+
+            st.markdown("<br>", unsafe_allow_html=True)
 
             st.markdown("#### ➕ Manual Sample Data Entry Form")
             st.caption("Insert individual sample records. Validation rules: CYP2C19*2 accepts GG/GA/AA; CYP2C19*3 accepts GG only; CYP2C19*17 accepts CC/CT/TT.")
