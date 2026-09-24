@@ -102,7 +102,8 @@ class ReportGenerator:
             st_rows = []
             for st_name, st_data in state_results.items():
                 cyp2_a = st_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
-                pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+                pm_data = st_data.get('cyp2c19_summary', {}).get('phenotypes', {})
+                pm_pct = pm_data.get('Poor Metabolizer', pm_data.get('Poor Metabolizer (PM)', {})).get('percentage', 0)
                 st_rows.append({
                     'State Name': st_name,
                     'Sample N': st_data.get('sample_count', 0),
@@ -220,7 +221,8 @@ class ReportGenerator:
             cyp2_chi = r_snps.get('CYP2C19*2', {}).get('hwe', {}).get('chi2_stat', 0)
             cyp2_p = r_snps.get('CYP2C19*2', {}).get('hwe', {}).get('p_value', 1.0)
             cyp17_t = r_snps.get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0)
-            pm_pct = r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+            r_phenos = r_data.get('cyp2c19_summary', {}).get('phenotypes', {})
+            pm_pct = r_phenos.get('Poor Metabolizer', r_phenos.get('Poor Metabolizer (PM)', {})).get('percentage', 0)
             
             reg_table_data.append([
                 r_name,
@@ -244,7 +246,7 @@ class ReportGenerator:
         # 5. Gender Stratification Section
         elements.append(Paragraph("3. Gender Stratification Analysis (Male vs Female vs Overall)", heading_style))
         gender_results = full_results.get('gender', {})
-        g_table_data = [["Cohort / Gender", "Sample N", "*2 Var Freq f(A)", "*17 Var Freq f(T)", "Normal (NM) %", "Poor (PM) %"]]
+        g_table_data = [["Cohort / Gender", "Sample N", "*2 Var Freq f(A)", "*17 Var Freq f(T)", "Normal %", "Poor %"]]
         
         for g_name in ['Male', 'Female']:
             g_data = gender_results.get(g_name, {})
@@ -252,8 +254,8 @@ class ReportGenerator:
             cyp2_a = g_snps.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
             cyp17_t = g_snps.get('CYP2C19*17', {}).get('allele_freqs', {}).get('T', 0)
             g_phenos = g_data.get('cyp2c19_summary', {}).get('phenotypes', {})
-            nm_p = g_phenos.get('Normal Metabolizer (NM)', {}).get('percentage', 0)
-            pm_p = g_phenos.get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+            nm_p = g_phenos.get('Normal Metabolizer', g_phenos.get('Normal Metabolizer (NM)', {})).get('percentage', 0)
+            pm_p = g_phenos.get('Poor Metabolizer', g_phenos.get('Poor Metabolizer (PM)', {})).get('percentage', 0)
             
             g_table_data.append([g_name, str(g_data.get('sample_count', 0)), str(cyp2_a), str(cyp17_t), f"{nm_p}%", f"{pm_p}%"])
             

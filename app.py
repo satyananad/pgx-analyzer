@@ -1073,7 +1073,7 @@ elif nav_option == "🌐 6. Geographic Population Groups":
                     <div class="kpi-val">{r_data.get('sample_count', 0):,}</div>
                     <div style="font-size: 0.8rem; color: #64748B; margin-top: 0.3rem;">
                         CYP2C19*2: <strong>{r_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)}</strong><br>
-                        PM: <strong style="color: #EF4444;">{r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)}%</strong>
+                        PM: <strong style="color: #EF4444;">{r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)}%</strong>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1167,7 +1167,7 @@ elif nav_option == "📍 8. Dedicated State-Wise Pages":
             sk2.metric("Missing Data Rate", f"{st_data.get('missing_pct', 0)}%")
             cyp2_freq = st_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
             sk3.metric("CYP2C19*2 Var Freq", cyp2_freq)
-            pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
+            pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)
             sk4.metric("Poor Metabolizers %", f"{pm_pct}%")
     else:
         st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view State-Wise Profiles.")
