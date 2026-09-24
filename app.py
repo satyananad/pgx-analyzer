@@ -228,12 +228,9 @@ EMPTY_COLS = [
     'CYP2C19*2 (rs4244285)', 'CYP2C19*3 (rs4986893)', 'CYP2C19*17 ( rs12248560)'
 ]
 
-# Only load demo dataset on initial cold start IF data has NOT been permanently deleted
+# Default to empty dataset (0 samples) on cold start so application starts fresh
 if st.session_state['uploaded_df'] is None:
-    if not st.session_state['is_deleted'] and os.path.exists(demo_file_path):
-        st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
-    else:
-        st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
+    st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
 
 db_manager = DatabaseManager()
 
