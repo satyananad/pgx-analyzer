@@ -63,6 +63,8 @@ class DataQCEngine:
                 col_mapping[col] = 'Date_of_Birth'
             elif 'state' in col_lower:
                 col_mapping[col] = 'State'
+            elif 'region' in col_lower:
+                col_mapping[col] = 'Region'
             elif 'test' in col_lower:
                 col_mapping[col] = 'Test_Requested'
         

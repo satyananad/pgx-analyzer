@@ -21,9 +21,19 @@ class DemographicStratifier:
         Assigns geographic region (North India, South India, East India, West India)
         to a sample based on State, Native Place, or pre-classified text.
         """
-        state_raw = str(row.get('State_Clean', row.get('State', ''))).strip()
+        state_raw = str(row.get('State_Clean', row.get('State', row.get('Region', '')))).strip()
+        region_raw = str(row.get('Region', '')).strip()
         native_place_raw = str(row.get('Native_Place_Clean', row.get('Native_Place', ''))).strip().lower()
         
+        # 0. Check direct Region column match
+        if region_raw:
+            reg_clean = re.sub(r'\s+', ' ', region_raw).title()
+            if 'Central' in reg_clean: return 'Central India'
+            if 'North' in reg_clean: return 'North India'
+            if 'South' in reg_clean: return 'South India'
+            if 'East' in reg_clean:  return 'East India'
+            if 'West' in reg_clean:  return 'West India'
+
         # 1. Direct match on State
         if state_raw in STATE_TO_REGION:
             return STATE_TO_REGION[state_raw]
