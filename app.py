@@ -235,12 +235,18 @@ if df_raw is not None:
     except Exception:
         pass
 
+# Helper to check if current workspace has valid active sample records
+def has_active_data() -> bool:
+    if full_results is None or 'overall' not in full_results:
+        return False
+    return full_results['overall'].get('sample_count', 0) > 0
+
 # -----------------------------------------------------------------------------
 # REUSABLE UNIFIED RESULTS RENDERER (MATCHING SCREENSHOTS 1, 2, 3, 4)
 # -----------------------------------------------------------------------------
 def render_unified_results(full_results: dict, qc_report: dict):
-    if full_results is None or qc_report is None or full_results['overall']['sample_count'] == 0:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset or enter samples manually on Page 1.")
+    if not has_active_data() or qc_report is None:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1.")
         return
 
     ov = full_results['overall']
@@ -629,7 +635,7 @@ elif nav_option == "🛡️ 3. Data Quality & Missing Audit":
     st.markdown("## 🛡️ Data Quality Control (QC) & Missing Values Audit")
     st.caption("Detailed breakdown of valid sample counts, missing genotype rates, duplicate IDs, and invalid genotype calls.")
     
-    if qc_report is not None:
+    if has_active_data() and qc_report is not None:
         q1, q2, q3, q4, q5 = st.columns(5)
         q1.metric("Total Cohort Uploaded", qc_report['total_samples'])
         q2.metric("Fully Valid Samples", qc_report['fully_valid_samples'])
@@ -660,6 +666,8 @@ elif nav_option == "🛡️ 3. Data Quality & Missing Audit":
         
         if qc_report['duplicate_sample_ids']:
             st.warning(f"Duplicate Sample IDs Detected: {', '.join([str(x) for x in qc_report['duplicate_sample_ids'][:10]])}")
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Data Quality Audit.")
 
 # -----------------------------------------------------------------------------
 # VIEW 4: GENOTYPE & ALLELE FREQUENCIES
@@ -668,7 +676,7 @@ elif nav_option == "🧬 4. Genotype & Allele Frequencies":
     st.markdown("## 🧬 Genotype Counts & Allele Frequencies Engine")
     st.caption("Exact Genotype Distribution, Zygosity (Homogenous vs Heterogenous), Allele Frequencies (p & q), and Percentages per Variant.")
     
-    if full_results is not None:
+    if has_active_data():
         st.markdown("### 🔍 Select Sub-Cohort Filter Profile")
         cohort_dict = {
             'Overall': full_results.get('overall', {}),
@@ -754,6 +762,8 @@ elif nav_option == "🧬 4. Genotype & Allele Frequencies":
                 chart_df = pd.DataFrame([{'Genotype': k, 'Count': v} for k, v in g_c.items()])
                 fig_g = px.bar(chart_df, x='Genotype', y='Count', title=f"{snp_name} Genotype Counts ({sel_key})", color='Genotype', color_discrete_sequence=px.colors.qualitative.Dark24)
                 st.plotly_chart(fig_g, use_container_width=True)
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Genotype & Allele Frequencies.")
 
 # -----------------------------------------------------------------------------
 # VIEW 5: HARDY-WEINBERG EQUILIBRIUM
@@ -762,7 +772,7 @@ elif nav_option == "⚖️ 5. Hardy-Weinberg Equilibrium":
     st.markdown("## ⚖️ Hardy-Weinberg Equilibrium (HWE) Test Engine")
     st.caption("Observed vs Expected Genotype Counts, Allele Frequencies (p & q), Chi-Square Statistic (\\chi^2), P-Values, and Haldane Exact Test")
     
-    if full_results is not None:
+    if has_active_data():
         snps_data = full_results['overall']['snps']
         
         st.markdown("### 📊 HWE Parameter Breakdown per Target SNP")
@@ -814,6 +824,8 @@ elif nav_option == "⚖️ 5. Hardy-Weinberg Equilibrium":
         * If **$\\chi^2 < 3.841$** ($P \\ge 0.05$): The Null hypothesis is accepted — The population is in **Hardy-Weinberg Equilibrium**.
         * If **$\\chi^2 \\ge 3.841$** ($P < 0.05$): The population is **NOT in Hardy-Weinberg Equilibrium (Departure from HWE)**.
         """)
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Hardy-Weinberg Equilibrium results.")
 
 # -----------------------------------------------------------------------------
 # VIEW 6: GEOGRAPHIC POPULATION GROUPS
@@ -822,7 +834,7 @@ elif nav_option == "🌐 6. Geographic Population Groups":
     st.markdown("## 🌐 Geographic Population Groups Analysis")
     st.caption("Complete Population Genetics & Statistical Analysis across South India, North India, East India, West India, and Central India")
     
-    if full_results is not None:
+    if has_active_data():
         reg = full_results['regional']
         regions = ['South India', 'North India', 'East India', 'West India', 'Central India']
         
@@ -870,6 +882,8 @@ elif nav_option == "🌐 6. Geographic Population Groups":
             cyp2_matrix.append(r_dict)
             
         st.dataframe(pd.DataFrame(cyp2_matrix), use_container_width=True)
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Geographic Population Groups.")
 
 # -----------------------------------------------------------------------------
 # VIEW 7: GENDER-WISE ANALYSIS
@@ -878,7 +892,7 @@ elif nav_option == "👫 7. Gender-Wise Analysis":
     st.markdown("## 👫 Gender-Wise Population Pharmacogenomics Analysis")
     st.caption("Complete comparative genetic & pharmacogenomic stratification across Male, Female, and Overall cohorts.")
     
-    if full_results is not None:
+    if has_active_data():
         gender_data = full_results.get('gender', {})
         male = gender_data.get('Male', {})
         female = gender_data.get('Female', {})
@@ -905,6 +919,8 @@ elif nav_option == "👫 7. Gender-Wise Analysis":
                 
         fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes Comparison (Male vs Female)")
         st.plotly_chart(fig_g2, use_container_width=True)
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Gender-Wise Analysis.")
 
 # -----------------------------------------------------------------------------
 # VIEW 8: DEDICATED STATE-WISE PAGES
@@ -913,7 +929,7 @@ elif nav_option == "📍 8. Dedicated State-Wise Pages":
     st.markdown("## 📍 Dedicated Individual State Profiles")
     st.caption("Detailed Pharmacogenomic breakdown for every state present in the dataset.")
     
-    if full_results is not None:
+    if has_active_data():
         state_dict = full_results.get('state_wise', {})
         state_names = sorted(list(state_dict.keys()))
         
@@ -928,6 +944,8 @@ elif nav_option == "📍 8. Dedicated State-Wise Pages":
             sk3.metric("CYP2C19*2 Var Freq", cyp2_freq)
             pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {}).get('percentage', 0)
             sk4.metric("Poor Metabolizers %", f"{pm_pct}%")
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view State-Wise Profiles.")
 
 # -----------------------------------------------------------------------------
 # VIEW 9: CYP2C19 CALLING & PHENOTYPES
@@ -936,7 +954,7 @@ elif nav_option == "💊 9. CYP2C19 Calling & Phenotypes":
     st.markdown("## 💊 CYP2C19 Star Allele, Diplotype & CPIC Phenotypes")
     st.caption("CPIC Metabolizer Phenotype Calls: Ultrarapid (UM), Rapid (RM), Normal (NM), Intermediate (IM), and Poor Metabolizer (PM)")
     
-    if full_results is not None:
+    if has_active_data():
         pgx = full_results['overall']['cyp2c19_summary']
         
         cp1, cp2 = st.columns(2)
@@ -947,6 +965,8 @@ elif nav_option == "💊 9. CYP2C19 Calling & Phenotypes":
         with cp2:
             st.markdown("### 🧬 Diplotype Call Matrix (*1/*1, *1/*2, *2/*17, etc.)")
             st.table(pd.DataFrame([{'Diplotype Call': k, 'Count': v['count'], 'Frequency': v['frequency'], 'Percentage': f"{v['percentage']}%"} for k, v in pgx['diplotypes'].items()]))
+    else:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view CYP2C19 Phenotypes.")
 
 # -----------------------------------------------------------------------------
 # VIEW 10: LIVE PREVIEW & DOWNLOAD REPORT
@@ -955,7 +975,7 @@ elif nav_option == "📄 10. Live Preview & Download Report":
     st.markdown("## 📄 Live Report Preview & Multi-Format Exporters")
     st.caption("Review full statistical document preview below before initiating file export.")
     
-    if full_results is not None and full_results['overall']['sample_count'] > 0:
+    if has_active_data():
         st.markdown("### 📥 Download Official Reports")
         d1, d2, d3 = st.columns(3)
         
@@ -968,7 +988,7 @@ elif nav_option == "📄 10. Live Preview & Download Report":
         pdf_bytes = ReportGenerator.export_to_pdf(full_results)
         d3.download_button("⬇ Download PDF Report", data=pdf_bytes, file_name="PGx_Executive_Summary.pdf", mime="application/pdf", use_container_width=True)
     else:
-        st.info("ℹ️ Workspace is empty. Add data to enable report generation.")
+        st.info("ℹ️ Workspace is empty (0 samples). Add data on Page 1 to enable report generation.")
 
 # -----------------------------------------------------------------------------
 # FOOTER NOTE
