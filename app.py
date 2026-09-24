@@ -313,31 +313,12 @@ def run_fast_pipeline(df: pd.DataFrame, mapped_cols_tuple: tuple):
     return clean_df, qc_report, full_results
 
 # -----------------------------------------------------------------------------
-# 3. SIDEBAR NAVIGATION MENU (CLEAN 10-PAGE NAVIGATION)
+# 3. SIDEBAR NAVIGATION MENU (CLEAN DATA MANAGEMENT SIDEBAR)
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=64)
     st.title("PGx Analytics Pro")
     st.caption("Automated Population Pharmacogenomics Platform")
-    
-    st.divider()
-    
-    nav_option = st.radio(
-        "Navigation Menu:",
-        [
-            "🏠 1. Data Entry, Upload & Column Mapping",
-            "📊 2. Executive Dashboard",
-            "🛡️ 3. Data Quality & Missing Audit",
-            "🧬 4. Genotype & Allele Frequencies",
-            "⚖️ 5. Hardy-Weinberg Equilibrium",
-            "🌐 6. Geographic Population Groups",
-            "👫 7. Gender-Wise Analysis",
-            "📍 8. Dedicated State-Wise Pages",
-            "💊 9. CYP2C19 Calling & Phenotypes",
-            "📄 10. Live Preview & Download Report"
-        ],
-        index=0
-    )
     
     st.divider()
     st.markdown("### Data Management")
@@ -379,39 +360,18 @@ def render_unified_results(full_results: dict, qc_report: dict):
     dup_ids = qc_report.get('duplicate_sample_ids', [])
     invalid_count = qc_report.get('invalid_genotypes_count', 0)
     invalid_log = qc_report.get('invalid_genotypes_log', {})
-    
-    # Overview KPI Cards (Matching Screenshots 1 & 4)
-    k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("TOTAL SAMPLES", f"{tot_samples:,}")
-    k2.metric("FULLY VALID", f"{fully_valid:,}")
-    k3.metric("MISSING GENOTYPES", "0.0%")
-    k4.metric("DUPLICATE IDS", dup_count)
-    k5.metric("INVALID GENOTYPE CALLS", invalid_count)
 
-    # Sub-box for Duplicate Sample IDs (Matching Screenshot 1)
-    if dup_ids:
-        st.markdown(f"""
-        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.8rem 1rem; margin-top: 0.5rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.85rem; color: #334155;">
-            <strong>Duplicate Sample IDs:</strong> {', '.join([str(x) for x in dup_ids[:10]])}{'...' if len(dup_ids) > 10 else ''}
-        </div>
-        """, unsafe_allow_html=True)
-        
-    # Warning Banner for Invalid Genotype Calls if > 0
-    if invalid_count > 0:
-        inv_details = []
-        for snp, samples in invalid_log.items():
-            s_list = [f"{item['sample_id']} ('{item['raw_value']}')" for item in samples[:5]]
-            inv_details.append(f"{snp}: {', '.join(s_list)}")
-        st.warning(f"⚠️ **Warning: {invalid_count} Invalid Genotype Call(s) Detected!** Invalid calls fail biological validation (e.g. non-GG in CYP2C19*3 or wrong alleles) and are quarantined from analysis. Details: {'; '.join(inv_details)}")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 4 Main Tabs (Matching Screenshots 1, 2, 3, 4)
-    tab_gen, tab_hwe, tab_pop, tab_pgx = st.tabs([
-        "Genotype & Allele", 
-        "Hardy-Weinberg", 
-        "Population Stratification", 
-        "CYP2C19 Calling"
+    # 9 Main Tabs Consolidating All Analysis Views
+    tab_overview, tab_gen, tab_hwe, tab_pop, tab_pgx, tab_qc, tab_geo, tab_gender, tab_state = st.tabs([
+        "📊 Executive Overview",
+        "🧬 Genotype & Allele", 
+        "⚖️ Hardy-Weinberg", 
+        "🌐 Population Stratification", 
+        "💊 CYP2C19 Calling",
+        "🛡️ Data Quality Audit",
+        "🗺️ Geographic Groups",
+        "👫 Gender-Wise",
+        "📍 Dedicated State Profiles"
     ])
 
     # Cohort Dictionary for Sub-cohort Filtering
@@ -434,12 +394,74 @@ def render_unified_results(full_results: dict, qc_report: dict):
         return sel_key, cohort_dict.get(sel_key, full_results['overall'])
 
     # -------------------------------------------------------------------------
-    # TAB 1: GENOTYPE & ALLELE (Matching Screenshots 2 & 4)
+    # TAB 1: EXECUTIVE OVERVIEW
+    # -------------------------------------------------------------------------
+    with tab_overview:
+        k1, k2, k3, k4, k5 = st.columns(5)
+        k1.metric("TOTAL SAMPLES", f"{tot_samples:,}")
+        k2.metric("FULLY VALID", f"{fully_valid:,}")
+        k3.metric("MISSING GENOTYPES", "0.0%")
+        k4.metric("DUPLICATE IDS", dup_count)
+        k5.metric("INVALID GENOTYPE CALLS", invalid_count)
+
+        if dup_ids:
+            st.markdown(f"""
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.8rem 1rem; margin-top: 0.5rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.85rem; color: #334155;">
+                <strong>Duplicate Sample IDs:</strong> {', '.join([str(x) for x in dup_ids[:10]])}{'...' if len(dup_ids) > 10 else ''}
+            </div>
+            """, unsafe_allow_html=True)
+            
+        if invalid_count > 0:
+            inv_details = []
+            for snp, samples in invalid_log.items():
+                s_list = [f"{item['sample_id']} ('{item['raw_value']}')" for item in samples[:5]]
+                inv_details.append(f"{snp}: {', '.join(s_list)}")
+            st.warning(f"⚠️ **Warning: {invalid_count} Invalid Genotype Call(s) Detected!** Details: {'; '.join(inv_details)}")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        c_ov1, c_ov2 = st.columns(2)
+        with c_ov1:
+            st.markdown("### 🏆 CYP2C19 Phenotype Summary")
+            pgx = ov.get('cyp2c19_summary', {})
+            phe_df = pd.DataFrame([{'Phenotype Category': k, 'Count': v['count'], 'Percentage': f"{v['percentage']:.1f}%"} for k, v in pgx.get('phenotypes', {}).items() if v['count'] > 0])
+            st.table(phe_df)
+
+        with c_ov2:
+            st.markdown("### 🌐 Regional Sample Distribution")
+            reg = full_results.get('regional', {})
+            reg_df = pd.DataFrame([{'Region': r, 'Sample Count (N)': r_data.get('sample_count', 0), '% of Cohort': f"{(r_data.get('sample_count', 0)/tot_samples*100):.1f}%" if tot_samples>0 else "0%"} for r, r_data in reg.items()])
+            st.table(reg_df)
+
+    # -------------------------------------------------------------------------
+    # TAB 2: GENOTYPE & ALLELE
     # -------------------------------------------------------------------------
     with tab_gen:
-        sel_key, sel_cohort = render_subcohort_pills("tab1")
+        sel_key, sel_cohort = render_subcohort_pills("tab_gen")
         snps_data = sel_cohort.get('snps', {})
         
+        def get_zygosity(gt_name, snp_name):
+            snp_conf = SNP_CONFIG.get(snp_name, {})
+            wt = snp_conf.get('wildtype_genotype', '')
+            het = snp_conf.get('het_genotype', '')
+            var = snp_conf.get('hom_var_genotype', '')
+            if gt_name == wt:
+                return "Homozygous Wildtype (Homogenous)"
+            elif gt_name in [het, het[::-1]]:
+                return "Heterozygote (Heterogenous)"
+            elif gt_name == var:
+                return "Homozygous Variant (Homogenous)"
+            return "Genotype Call"
+
+        def get_allele_type(al_name, snp_name):
+            snp_conf = SNP_CONFIG.get(snp_name, {})
+            ref = snp_conf.get('ref_allele', '')
+            var = snp_conf.get('var_allele', '')
+            if al_name == ref:
+                return "Reference Allele"
+            elif al_name == var:
+                return "Variant Allele"
+            return "Allele Call"
+
         snp_display_order = [
             ('CYP2C19*2', 'rs4244285 (CYP2C19*2, c.681G>A)'),
             ('CYP2C19*3', 'rs4986893 (CYP2C19*3, c.636G>A)'),
@@ -458,33 +480,44 @@ def render_unified_results(full_results: dict, qc_report: dict):
                 
                 c_tbl, c_fig = st.columns([1.1, 0.9])
                 with c_tbl:
-                    # GENOTYPE TABLE
                     g_c = s_res.get('genotype_counts', {})
                     g_p = s_res.get('genotype_pcts', {})
-                    gt_rows = [{'GENOTYPE': k, 'COUNT': v, 'FREQUENCY': f"{g_p.get(k, 0):.1f}%"} for k, v in g_c.items()]
+                    g_f = s_res.get('genotype_freqs', {})
+                    gt_rows = [{
+                        'GENOTYPE': k, 
+                        'ZYGOSITY': get_zygosity(k, snp_code),
+                        'COUNT': v, 
+                        'FREQUENCY': g_f.get(k, 0),
+                        'PERCENTAGE': f"{g_p.get(k, 0):.1f}%"
+                    } for k, v in g_c.items()]
                     st.table(pd.DataFrame(gt_rows))
                     
-                    # ALLELE TABLE
                     a_c = s_res.get('allele_counts', {})
                     a_p = s_res.get('allele_pcts', {})
-                    al_rows = [{'ALLELE': k, 'COUNT': v, 'FREQUENCY': f"{a_p.get(k, 0):.1f}%"} for k, v in a_c.items()]
+                    al_rows = [{
+                        'ALLELE': k, 
+                        'TYPE': get_allele_type(k, snp_code),
+                        'COUNT': v, 
+                        'FREQUENCY': f"{a_p.get(k, 0):.1f}%"
+                    } for k, v in a_c.items()]
                     st.table(pd.DataFrame(al_rows))
                     
                 with c_fig:
                     fig_df = pd.DataFrame([{'Genotype': k, 'Count': v} for k, v in g_c.items()])
                     fig_bar = px.bar(
                         fig_df, x='Genotype', y='Count', 
-                        title="Genotype distribution", 
+                        title=f"{snp_code} Genotype distribution ({sel_key})", 
+                        color='Genotype',
                         color_discrete_sequence=['#15803D', '#1D4ED8', '#B91C1C']
                     )
-                    fig_bar.update_layout(height=240, margin=dict(l=20, r=20, t=35, b=20))
+                    fig_bar.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
                     st.plotly_chart(fig_bar, use_container_width=True)
 
     # -------------------------------------------------------------------------
-    # TAB 2: HARDY-WEINBERG
+    # TAB 3: HARDY-WEINBERG
     # -------------------------------------------------------------------------
     with tab_hwe:
-        sel_key, sel_cohort = render_subcohort_pills("tab2")
+        sel_key, sel_cohort = render_subcohort_pills("tab_hwe")
         snps_data = sel_cohort.get('snps', {})
         
         st.markdown(f"### Hardy-Weinberg Equilibrium Audit ({sel_key} Cohort)")
@@ -501,15 +534,25 @@ def render_unified_results(full_results: dict, qc_report: dict):
                 'Chi-Square (χ²)': hw.get('chi2_stat', 0),
                 'Degrees of Freedom': hw.get('df', 1),
                 'P-Value': hw.get('p_value', 1.0),
+                'Exact Test P-Value': hw.get('exact_p_value', 1.0),
                 'Interpretation': hw.get('interpretation', 'In HWE')
             })
         st.table(pd.DataFrame(hwe_table_rows))
         
         st.markdown("##### Table 3. Chi-Square Distribution Reference Table (df = 1, α = 0.05, Critical = 3.841)")
+        chi2_ref_df = pd.DataFrame([{
+            'Level of Significance (α)': '0.50',
+            '0.10': '2.706',
+            '0.05 (Critical Threshold)': '3.841',
+            '0.02': '5.412',
+            '0.01': '6.635',
+            '0.001': '10.827'
+        }])
+        st.table(chi2_ref_df)
         st.info("📌 **HWE Decision Rule:** If $\\chi^2 \\ge 3.841$ ($P < 0.05$), population deviates from Hardy-Weinberg Equilibrium.")
 
     # -------------------------------------------------------------------------
-    # TAB 3: POPULATION STRATIFICATION (Matching Screenshot 1)
+    # TAB 4: POPULATION STRATIFICATION
     # -------------------------------------------------------------------------
     with tab_pop:
         st.markdown("### Group sizes")
@@ -528,13 +571,12 @@ def render_unified_results(full_results: dict, qc_report: dict):
             {'GROUP': 'Gender — Male', 'N': gen_dict.get('Male', {}).get('sample_count', 0), '% OF TOTAL': f"{(gen_dict.get('Male', {}).get('sample_count', 0)/tot_n*100):.1f}%" if tot_n>0 else "0%"},
         ]
         st.table(pd.DataFrame(group_rows))
-        st.caption("Use the group tabs above (Overall / Region / Gender) to view genotype, allele, HWE and CYP2C19 results for each population subgroup — all three other tabs recompute per the selected group.")
 
     # -------------------------------------------------------------------------
-    # TAB 4: CYP2C19 CALLING (Matching Screenshot 3)
+    # TAB 5: CYP2C19 CALLING
     # -------------------------------------------------------------------------
     with tab_pgx:
-        sel_key, sel_cohort = render_subcohort_pills("tab4")
+        sel_key, sel_cohort = render_subcohort_pills("tab_pgx")
         pgx = sel_cohort.get('cyp2c19_summary', {})
         dips = pgx.get('diplotypes', {})
         phenos = pgx.get('phenotypes', {})
@@ -570,6 +612,141 @@ def render_unified_results(full_results: dict, qc_report: dict):
             )
             fig_donut.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
             st.plotly_chart(fig_donut, use_container_width=True)
+
+    # -------------------------------------------------------------------------
+    # TAB 6: DATA QUALITY AUDIT
+    # -------------------------------------------------------------------------
+    with tab_qc:
+        st.markdown("### 🛡️ Data Quality Control (QC) & Missing Values Audit")
+        q1, q2, q3, q4, q5 = st.columns(5)
+        q1.metric("Total Cohort Uploaded", qc_report['total_samples'])
+        q2.metric("Fully Valid Samples", qc_report['fully_valid_samples'])
+        q3.metric("Duplicate Sample IDs", qc_report['duplicate_sample_count'])
+        q4.metric("Invalid Genotype Calls", qc_report['invalid_genotypes_count'])
+        q5.metric("Validation Status", "PASS" if qc_report['invalid_genotypes_count'] == 0 else "WARNING")
+        
+        if qc_report['invalid_genotypes_count'] > 0:
+            st.error(f"⚠️ **Warning: {qc_report['invalid_genotypes_count']} Invalid Genotype Call(s) Detected!** Invalid genotype entries were flagged and quarantined.")
+            inv_log_rows = []
+            for snp, samples in qc_report['invalid_genotypes_log'].items():
+                for item in samples:
+                    inv_log_rows.append({'SNP Variant': snp, 'Sample ID': item['sample_id'], 'Raw Invalid Genotype Value': item['raw_value'], 'Audit Action': 'Quarantined & Excluded'})
+            st.table(pd.DataFrame(inv_log_rows))
+
+        st.markdown("#### Per-SNP Quality Control & Missing Values Table")
+        qc_rows = []
+        for snp, sdata in qc_report['snp_qc_stats'].items():
+            qc_rows.append({
+                'SNP Variant': snp,
+                'Valid Samples': sdata['valid_samples'],
+                'Missing Genotypes Count': sdata['missing_samples'],
+                'Invalid Genotypes Count': sdata.get('invalid_samples', 0),
+                'Missing Data Rate (%)': f"{sdata['missing_pct']:.1f}%",
+                'Quality Audit Status': 'PASS' if sdata.get('invalid_samples', 0) == 0 else 'WARNING'
+            })
+        st.table(pd.DataFrame(qc_rows))
+
+    # -------------------------------------------------------------------------
+    # TAB 7: GEOGRAPHIC POPULATION GROUPS
+    # -------------------------------------------------------------------------
+    with tab_geo:
+        st.markdown("### 🌐 Geographic Population Groups Analysis")
+        reg = full_results['regional']
+        regions = ['South India', 'North India', 'East India', 'West India', 'Central India']
+        
+        cols = st.columns(5)
+        for idx, r in enumerate(regions):
+            r_data = reg.get(r, {})
+            with cols[idx]:
+                st.markdown(f"""
+                <div class="kpi-card">
+                    <div class="kpi-lbl">{r}</div>
+                    <div class="kpi-val">{r_data.get('sample_count', 0):,}</div>
+                    <div style="font-size: 0.8rem; color: #64748B; margin-top: 0.3rem;">
+                        CYP2C19*2: <strong>{r_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)}</strong><br>
+                        PM: <strong style="color: #EF4444;">{r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0):.1f}%</strong>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### Comprehensive Regional Statistical Summary Table")
+        
+        cyp2_rows = [
+            ('A Count (Variant Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('A', 0)),
+            ('G Count (Reference Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('G', 0)),
+            ('Total Allele Count (2N)', lambda s: sum(s.get('CYP2C19*2', {}).get('allele_counts', {}).values())),
+            ('GA COUNT (Heterozygote)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GA', 0)),
+            ('AA COUNT (Homozygous Variant)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('AA', 0)),
+            ('GG COUNT (Homozygous Wildtype)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GG', 0)),
+            ('Total Sample N', lambda s: sum(s.get('CYP2C19*2', {}).get('genotype_counts', {}).values())),
+            ('Allele Frequency F(A)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)),
+            ('Allele Frequency F(G)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('G', 0)),
+            ('Chi-Square (χ²)', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('chi2_stat', 0)),
+            ('P VALUE', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('p_value', 1.0)),
+            ('HWE Interpretation', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE'))
+        ]
+        
+        cyp2_matrix = []
+        for label, func in cyp2_rows:
+            r_dict = {'Statistical Parameter (*2)': label}
+            for r in regions:
+                r_dict[r] = func(reg.get(r, {}).get('snps', {}))
+            cyp2_matrix.append(r_dict)
+            
+        st.dataframe(pd.DataFrame(cyp2_matrix), use_container_width=True)
+
+    # -------------------------------------------------------------------------
+    # TAB 8: GENDER-WISE ANALYSIS
+    # -------------------------------------------------------------------------
+    with tab_gender:
+        st.markdown("### 👫 Gender-Wise Population Pharmacogenomics Analysis")
+        gender_data = full_results.get('gender', {})
+        male = gender_data.get('Male', {})
+        female = gender_data.get('Female', {})
+        
+        m_count = male.get('sample_count', 0)
+        f_count = female.get('sample_count', 0)
+        tot_count = ov.get('sample_count', 0)
+        
+        gk1, gk2, gk3 = st.columns(3)
+        gk1.metric("Male Samples (N)", f"{m_count:,}")
+        gk2.metric("Female Samples (N)", f"{f_count:,}")
+        gk3.metric("Total Cohort N", f"{tot_count:,}")
+        
+        m_phenos = male.get('cyp2c19_summary', {}).get('phenotypes', {})
+        f_phenos = female.get('cyp2c19_summary', {}).get('phenotypes', {})
+        
+        pheno_chart_df = []
+        for p_name in PHENOTYPE_ORDER:
+            if p_name in m_phenos:
+                pheno_chart_df.append({'Gender': 'Male', 'Phenotype': p_name.split(' (')[0], 'Count': m_phenos[p_name]['count']})
+            if p_name in f_phenos:
+                pheno_chart_df.append({'Gender': 'Female', 'Phenotype': p_name.split(' (')[0], 'Count': f_phenos[p_name]['count']})
+                
+        if pheno_chart_df:
+            fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes Comparison (Male vs Female)")
+            st.plotly_chart(fig_g2, use_container_width=True)
+
+    # -------------------------------------------------------------------------
+    # TAB 9: DEDICATED STATE-WISE PAGES
+    # -------------------------------------------------------------------------
+    with tab_state:
+        st.markdown("### 📍 Dedicated Individual State Profiles")
+        state_dict = full_results.get('state_wise', {})
+        state_names = sorted(list(state_dict.keys()))
+        
+        if state_names:
+            selected_st = st.selectbox("Select Dedicated State Profile:", state_names, index=0, key="st_tab_selectbox")
+            st_data = state_dict[selected_st]
+            
+            sk1, sk2, sk3, sk4 = st.columns(4)
+            sk1.metric("State Sample N", st_data.get('sample_count', 0))
+            sk2.metric("Missing Data Rate", f"{st_data.get('missing_pct', 0)}%")
+            cyp2_freq = st_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
+            sk3.metric("CYP2C19*2 Var Freq", cyp2_freq)
+            pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)
+            sk4.metric("Poor Metabolizers %", f"{pm_pct:.1f}%")
 
 # -----------------------------------------------------------------------------
 # 3-STEP WORKFLOW PIPELINE RENDERER (EXACT MATCH FOR USER SCREENSHOTS 1, 2, 3, 4, 5)
@@ -848,372 +1025,9 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
         """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# VIEW ROUTING
+# MAIN WORKFLOW EXECUTION
 # -----------------------------------------------------------------------------
-if nav_option in ["🏠 1. Data Entry, Upload & Column Mapping", "📊 2. Executive Dashboard"]:
-    render_workflow_pipeline(df_raw, full_results, qc_report)
-
-# -----------------------------------------------------------------------------
-# VIEW 3: DATA QUALITY & MISSING AUDIT
-# -----------------------------------------------------------------------------
-elif nav_option == "🛡️ 3. Data Quality & Missing Audit":
-    st.markdown("## 🛡️ Data Quality Control (QC) & Missing Values Audit")
-    st.caption("Detailed breakdown of valid sample counts, missing genotype rates, duplicate IDs, and invalid genotype calls.")
-    
-    if has_active_data() and qc_report is not None:
-        q1, q2, q3, q4, q5 = st.columns(5)
-        q1.metric("Total Cohort Uploaded", qc_report['total_samples'])
-        q2.metric("Fully Valid Samples", qc_report['fully_valid_samples'])
-        q3.metric("Duplicate Sample IDs", qc_report['duplicate_sample_count'])
-        q4.metric("Invalid Genotype Calls", qc_report['invalid_genotypes_count'])
-        q5.metric("Validation Status", "PASS" if qc_report['invalid_genotypes_count'] == 0 else "WARNING")
-        
-        if qc_report['invalid_genotypes_count'] > 0:
-            st.error(f"⚠️ **Warning: {qc_report['invalid_genotypes_count']} Invalid Genotype Call(s) Detected!** Invalid genotype entries were flagged and quarantined.")
-            inv_log_rows = []
-            for snp, samples in qc_report['invalid_genotypes_log'].items():
-                for item in samples:
-                    inv_log_rows.append({'SNP Variant': snp, 'Sample ID': item['sample_id'], 'Raw Invalid Genotype Value': item['raw_value'], 'Audit Action': 'Quarantined & Excluded'})
-            st.table(pd.DataFrame(inv_log_rows))
-
-        st.markdown("### Per-SNP Quality Control & Missing Values Table")
-        qc_rows = []
-        for snp, sdata in qc_report['snp_qc_stats'].items():
-            qc_rows.append({
-                'SNP Variant': snp,
-                'Valid Samples': sdata['valid_samples'],
-                'Missing Genotypes Count': sdata['missing_samples'],
-                'Invalid Genotypes Count': sdata.get('invalid_samples', 0),
-                'Missing Data Rate (%)': f"{sdata['missing_pct']}%",
-                'Quality Audit Status': 'PASS' if sdata.get('invalid_samples', 0) == 0 else 'WARNING'
-            })
-        st.table(pd.DataFrame(qc_rows))
-        
-        if qc_report['duplicate_sample_ids']:
-            st.warning(f"Duplicate Sample IDs Detected: {', '.join([str(x) for x in qc_report['duplicate_sample_ids'][:10]])}")
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Data Quality Audit.")
-
-# -----------------------------------------------------------------------------
-# VIEW 4: GENOTYPE & ALLELE FREQUENCIES
-# -----------------------------------------------------------------------------
-elif nav_option == "🧬 4. Genotype & Allele Frequencies":
-    st.markdown("## 🧬 Genotype Counts & Allele Frequencies Engine")
-    st.caption("Exact Genotype Distribution, Zygosity (Homogenous vs Heterogenous), Allele Frequencies (p & q), and Percentages per Variant.")
-    
-    if has_active_data():
-        st.markdown("### 🔍 Select Sub-Cohort Filter Profile")
-        cohort_dict = {
-            'Overall': full_results.get('overall', {}),
-            'South India': full_results.get('regional', {}).get('South India', {}),
-            'North India': full_results.get('regional', {}).get('North India', {}),
-            'East India': full_results.get('regional', {}).get('East India', {}),
-            'West India': full_results.get('regional', {}).get('West India', {}),
-            'Central India': full_results.get('regional', {}).get('Central India', {}),
-            'Female': full_results.get('gender', {}).get('Female', {}),
-            'Male': full_results.get('gender', {}).get('Male', {})
-        }
-        
-        cohort_labels = [f"{k} (n={v.get('sample_count', 0)})" for k, v in cohort_dict.items() if v]
-        sel_pill = st.radio("Choose Sub-Cohort Filter:", cohort_labels, horizontal=True)
-        sel_key = sel_pill.split(' (')[0]
-        sel_cohort_data = cohort_dict.get(sel_key, full_results['overall'])
-        
-        snps_data = sel_cohort_data.get('snps', {})
-        
-        def get_zygosity(gt_name, snp_name):
-            snp_conf = SNP_CONFIG.get(snp_name, {})
-            wt = snp_conf.get('wildtype_genotype', '')
-            het = snp_conf.get('het_genotype', '')
-            var = snp_conf.get('hom_var_genotype', '')
-            if gt_name == wt:
-                return "Homozygous Wildtype (Homogenous)"
-            elif gt_name in [het, het[::-1]]:
-                return "Heterozygote (Heterogenous)"
-            elif gt_name == var:
-                return "Homozygous Variant (Homogenous)"
-            return "Genotype Call"
-
-        def get_allele_type(al_name, snp_name):
-            snp_conf = SNP_CONFIG.get(snp_name, {})
-            ref = snp_conf.get('ref_allele', '')
-            var = snp_conf.get('var_allele', '')
-            if al_name == ref:
-                return "Reference Allele"
-            elif al_name == var:
-                return "Variant Allele"
-            return "Allele Call"
-
-        for snp_name, s_res in snps_data.items():
-            snp_conf = SNP_CONFIG.get(snp_name, {})
-            rsid = snp_conf.get('rsid', '')
-            st.markdown(f"### {rsid} ({snp_name}) — {sel_key} Cohort")
-            st.caption(f"Valid: {s_res.get('valid_samples', 0):,} | Missing: 0 | Invalid calls: 0")
-            
-            c_tables, c_chart = st.columns([1.2, 1.0])
-            with c_tables:
-                st.markdown("**Genotype Distribution & Zygosity (Homogenous vs Heterogenous)**")
-                g_c = s_res['genotype_counts']
-                g_p = s_res['genotype_pcts']
-                g_f = s_res['genotype_freqs']
-                
-                gt_rows = []
-                for k, v in g_c.items():
-                    gt_rows.append({
-                        'GENOTYPE': k,
-                        'ZYGOSITY CLASSIFICATION': get_zygosity(k, snp_name),
-                        'COUNT': v,
-                        'FREQUENCY': g_f.get(k, 0),
-                        'PERCENTAGE': f"{g_p.get(k, 0)}%"
-                    })
-                st.table(pd.DataFrame(gt_rows))
-                
-                st.markdown("**Allele Distribution (Reference vs Variant)**")
-                a_c = s_res['allele_counts']
-                a_p = s_res['allele_pcts']
-                
-                al_rows = []
-                for k, v in a_c.items():
-                    al_rows.append({
-                        'ALLELE': k,
-                        'ALLELE TYPE': get_allele_type(k, snp_name),
-                        'COUNT': v,
-                        'FREQUENCY': f"{a_p.get(k, 0)}%"
-                    })
-                st.table(pd.DataFrame(al_rows))
-                
-            with c_chart:
-                st.markdown("**Genotype Distribution Visual**")
-                chart_df = pd.DataFrame([{'Genotype': k, 'Count': v} for k, v in g_c.items()])
-                fig_g = px.bar(chart_df, x='Genotype', y='Count', title=f"{snp_name} Genotype Counts ({sel_key})", color='Genotype', color_discrete_sequence=px.colors.qualitative.Dark24)
-                st.plotly_chart(fig_g, use_container_width=True)
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Genotype & Allele Frequencies.")
-
-# -----------------------------------------------------------------------------
-# VIEW 5: HARDY-WEINBERG EQUILIBRIUM
-# -----------------------------------------------------------------------------
-elif nav_option == "⚖️ 5. Hardy-Weinberg Equilibrium":
-    st.markdown("## ⚖️ Hardy-Weinberg Equilibrium (HWE) Test Engine")
-    st.caption("Observed vs Expected Genotype Counts, Allele Frequencies (p & q), Chi-Square Statistic (\\chi^2), P-Values, and Haldane Exact Test")
-    
-    if has_active_data():
-        snps_data = full_results['overall']['snps']
-        
-        st.markdown("### 📊 HWE Parameter Breakdown per Target SNP")
-        full_hwe_rows = []
-        for snp_name, s_res in snps_data.items():
-            hw = s_res.get('hwe', {})
-            af = s_res.get('allele_freqs', {})
-            gc = s_res.get('genotype_counts', {})
-            exp_c = hw.get('expected_counts', {})
-            exp_f = hw.get('expected_freqs', {})
-            
-            ref_a = list(af.keys())[0] if af else 'A'
-            var_a = list(af.keys())[1] if len(af) > 1 else 'a'
-            wt_g = list(gc.keys())[0] if gc else 'AA'
-            het_g = list(gc.keys())[1] if len(gc) > 1 else 'Aa'
-            var_g = list(gc.keys())[2] if len(gc) > 2 else 'aa'
-
-            full_hwe_rows.append({
-                'SNP Variant': snp_name,
-                'Total Sample Size (N)': s_res.get('valid_samples', 0),
-                f'Dominant p({ref_a})': af.get(ref_a, 0),
-                f'Recessive q({var_a})': af.get(var_a, 0),
-                f'Observed ({wt_g} / {het_g} / {var_g})': f"{gc.get(wt_g, 0)} / {gc.get(het_g, 0)} / {gc.get(var_g, 0)}",
-                f'Expected Freq ({wt_g}:p^2, {het_g}:2pq, {var_g}:q^2)': f"{exp_f.get(wt_g, 0)} / {exp_f.get(het_g, 0)} / {exp_f.get(var_g, 0)}",
-                f'Expected Counts ({wt_g} / {het_g} / {var_g})': f"{exp_c.get(wt_g, 0)} / {exp_c.get(het_g, 0)} / {exp_c.get(var_g, 0)}",
-                'Chi-Square (χ²)': hw.get('chi2_stat', 0),
-                'Degrees of Freedom': hw.get('df', 1),
-                'Chi2 P-Value': hw.get('p_value', 1.0),
-                'Exact Test P-Value': hw.get('exact_p_value', 1.0),
-                'HWE Interpretation': hw.get('interpretation', 'In HWE')
-            })
-            
-        st.dataframe(pd.DataFrame(full_hwe_rows), use_container_width=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📋 Table 3. Chi-Square Distribution Reference Table (1 Degree of Freedom)")
-        chi2_ref_df = pd.DataFrame([{
-            'Level of Significance (α)': '0.50',
-            '0.10': '2.706',
-            '0.05 (Critical Threshold)': '3.841',
-            '0.02': '5.412',
-            '0.01': '6.635',
-            '0.001': '10.827'
-        }])
-        st.table(chi2_ref_df)
-        
-        st.info("""
-        📌 **HWE Decision Rule (df = 1, α = 0.05, Critical Threshold = 3.841):**
-        * If **$\\chi^2 < 3.841$** ($P \\ge 0.05$): The Null hypothesis is accepted — The population is in **Hardy-Weinberg Equilibrium**.
-        * If **$\\chi^2 \\ge 3.841$** ($P < 0.05$): The population is **NOT in Hardy-Weinberg Equilibrium (Departure from HWE)**.
-        """)
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Hardy-Weinberg Equilibrium results.")
-
-# -----------------------------------------------------------------------------
-# VIEW 6: GEOGRAPHIC POPULATION GROUPS
-# -----------------------------------------------------------------------------
-elif nav_option == "🌐 6. Geographic Population Groups":
-    st.markdown("## 🌐 Geographic Population Groups Analysis")
-    st.caption("Complete Population Genetics & Statistical Analysis across South India, North India, East India, West India, and Central India")
-    
-    if has_active_data():
-        reg = full_results['regional']
-        regions = ['South India', 'North India', 'East India', 'West India', 'Central India']
-        
-        cols = st.columns(5)
-        for idx, r in enumerate(regions):
-            r_data = reg.get(r, {})
-            with cols[idx]:
-                st.markdown(f"""
-                <div class="kpi-card">
-                    <div class="kpi-lbl">{r}</div>
-                    <div class="kpi-val">{r_data.get('sample_count', 0):,}</div>
-                    <div style="font-size: 0.8rem; color: #64748B; margin-top: 0.3rem;">
-                        CYP2C19*2: <strong>{r_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)}</strong><br>
-                        PM: <strong style="color: #EF4444;">{r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', r_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)}%</strong>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📊 Comprehensive Regional Statistical Summary Table")
-        
-        cyp2_rows = [
-            ('A Count (Variant Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('A', 0)),
-            ('G Count (Reference Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('G', 0)),
-            ('Total Allele Count (2N)', lambda s: sum(s.get('CYP2C19*2', {}).get('allele_counts', {}).values())),
-            ('GA COUNT (Heterozygote)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GA', 0)),
-            ('AA COUNT (Homozygous Variant)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('AA', 0)),
-            ('GG COUNT (Homozygous Wildtype)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GG', 0)),
-            ('Total Sample N', lambda s: sum(s.get('CYP2C19*2', {}).get('genotype_counts', {}).values())),
-            ('Allele Frequency F(A)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)),
-            ('Allele Frequency F(G)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('G', 0)),
-            ('Expected GA Count', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('expected_counts', {}).get('GA', 0)),
-            ('Expected GG Count', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('expected_counts', {}).get('GG', 0)),
-            ('Expected AA Count', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('expected_counts', {}).get('AA', 0)),
-            ('Chi-Square (χ²)', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('chi2_stat', 0)),
-            ('P VALUE', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('p_value', 1.0)),
-            ('HWE Interpretation', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE'))
-        ]
-        
-        cyp2_matrix = []
-        for label, func in cyp2_rows:
-            r_dict = {'Statistical Parameter (*2)': label}
-            for r in regions:
-                r_dict[r] = func(reg.get(r, {}).get('snps', {}))
-            cyp2_matrix.append(r_dict)
-            
-        st.dataframe(pd.DataFrame(cyp2_matrix), use_container_width=True)
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Geographic Population Groups.")
-
-# -----------------------------------------------------------------------------
-# VIEW 7: GENDER-WISE ANALYSIS
-# -----------------------------------------------------------------------------
-elif nav_option == "👫 7. Gender-Wise Analysis":
-    st.markdown("## 👫 Gender-Wise Population Pharmacogenomics Analysis")
-    st.caption("Complete comparative genetic & pharmacogenomic stratification across Male, Female, and Overall cohorts.")
-    
-    if has_active_data():
-        gender_data = full_results.get('gender', {})
-        male = gender_data.get('Male', {})
-        female = gender_data.get('Female', {})
-        overall = full_results.get('overall', {})
-        
-        m_count = male.get('sample_count', 0)
-        f_count = female.get('sample_count', 0)
-        tot_count = overall.get('sample_count', 0)
-        
-        gk1, gk2, gk3 = st.columns(3)
-        gk1.metric("Male Samples (N)", f"{m_count:,}")
-        gk2.metric("Female Samples (N)", f"{f_count:,}")
-        gk3.metric("Total Cohort N", f"{tot_count:,}")
-        
-        m_phenos = male.get('cyp2c19_summary', {}).get('phenotypes', {})
-        f_phenos = female.get('cyp2c19_summary', {}).get('phenotypes', {})
-        
-        pheno_chart_df = []
-        for p_name in PHENOTYPE_ORDER:
-            if p_name in m_phenos:
-                pheno_chart_df.append({'Gender': 'Male', 'Phenotype': p_name.split(' (')[0], 'Count': m_phenos[p_name]['count']})
-            if p_name in f_phenos:
-                pheno_chart_df.append({'Gender': 'Female', 'Phenotype': p_name.split(' (')[0], 'Count': f_phenos[p_name]['count']})
-                
-        fig_g2 = px.bar(pd.DataFrame(pheno_chart_df), x='Phenotype', y='Count', color='Gender', barmode='group', title="Metabolizer Phenotypes Comparison (Male vs Female)")
-        st.plotly_chart(fig_g2, use_container_width=True)
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view Gender-Wise Analysis.")
-
-# -----------------------------------------------------------------------------
-# VIEW 8: DEDICATED STATE-WISE PAGES
-# -----------------------------------------------------------------------------
-elif nav_option == "📍 8. Dedicated State-Wise Pages":
-    st.markdown("## 📍 Dedicated Individual State Profiles")
-    st.caption("Detailed Pharmacogenomic breakdown for every state present in the dataset.")
-    
-    if has_active_data():
-        state_dict = full_results.get('state_wise', {})
-        state_names = sorted(list(state_dict.keys()))
-        
-        if state_names:
-            selected_st = st.selectbox("Select Dedicated State Profile:", state_names, index=0)
-            st_data = state_dict[selected_st]
-            
-            sk1, sk2, sk3, sk4 = st.columns(4)
-            sk1.metric("State Sample N", st_data.get('sample_count', 0))
-            sk2.metric("Missing Data Rate", f"{st_data.get('missing_pct', 0)}%")
-            cyp2_freq = st_data.get('snps', {}).get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)
-            sk3.metric("CYP2C19*2 Var Freq", cyp2_freq)
-            pm_pct = st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer', st_data.get('cyp2c19_summary', {}).get('phenotypes', {}).get('Poor Metabolizer (PM)', {})).get('percentage', 0)
-            sk4.metric("Poor Metabolizers %", f"{pm_pct}%")
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view State-Wise Profiles.")
-
-# -----------------------------------------------------------------------------
-# VIEW 9: CYP2C19 CALLING & PHENOTYPES
-# -----------------------------------------------------------------------------
-elif nav_option == "💊 9. CYP2C19 Calling & Phenotypes":
-    st.markdown("## 💊 CYP2C19 Star Allele, Diplotype & CPIC Phenotypes")
-    st.caption("CPIC Metabolizer Phenotype Calls: Ultrarapid (UM), Rapid (RM), Normal (NM), Intermediate (IM), and Poor Metabolizer (PM)")
-    
-    if has_active_data():
-        pgx = full_results['overall']['cyp2c19_summary']
-        
-        cp1, cp2 = st.columns(2)
-        with cp1:
-            st.markdown("### 🏆 Metabolizer Phenotypes Breakdown")
-            st.table(pd.DataFrame([{'Phenotype Category': k, 'Count': v['count'], 'Percentage': f"{v['percentage']}%"} for k, v in pgx['phenotypes'].items()]))
-            
-        with cp2:
-            st.markdown("### 🧬 Diplotype Call Matrix (*1/*1, *1/*2, *2/*17, etc.)")
-            st.table(pd.DataFrame([{'Diplotype Call': k, 'Count': v['count'], 'Frequency': v['frequency'], 'Percentage': f"{v['percentage']}%"} for k, v in pgx['diplotypes'].items()]))
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1 to view CYP2C19 Phenotypes.")
-
-# -----------------------------------------------------------------------------
-# VIEW 10: LIVE PREVIEW & DOWNLOAD REPORT
-# -----------------------------------------------------------------------------
-elif nav_option == "📄 10. Live Preview & Download Report":
-    st.markdown("## 📄 Live Report Preview & Multi-Format Exporters")
-    st.caption("Review full statistical document preview below before initiating file export.")
-    
-    if has_active_data():
-        st.markdown("### 📥 Download Official Reports")
-        d1, d2, d3 = st.columns(3)
-        
-        excel_bytes = ReportGenerator.export_to_excel(full_results)
-        d1.download_button("⬇ Download Excel (.xlsx, Multi-Tab)", data=excel_bytes, file_name="PGx_Population_Report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
-        
-        csv_bytes = processed_df.to_csv(index=False).encode('utf-8')
-        d2.download_button("⬇ Download CSV Summary", data=csv_bytes, file_name="PGx_Summary.csv", mime="text/csv", use_container_width=True)
-        
-        pdf_bytes = ReportGenerator.export_to_pdf(full_results)
-        d3.download_button("⬇ Download PDF Report", data=pdf_bytes, file_name="PGx_Executive_Summary.pdf", mime="application/pdf", use_container_width=True)
-    else:
-        st.info("ℹ️ Workspace is empty (0 samples). Add data on Page 1 to enable report generation.")
+render_workflow_pipeline(df_raw, full_results, qc_report)
 
 # -----------------------------------------------------------------------------
 # FOOTER NOTE
