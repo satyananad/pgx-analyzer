@@ -23,6 +23,22 @@ logger = logging.getLogger(__name__)
 
 
 class ReportGenerator:
+    def __init__(self, full_results: Dict[str, Any] = None, qc_report: Dict[str, Any] = None):
+        self.full_results = full_results or {}
+        self.qc_report = qc_report or {}
+
+    def generate_excel(self) -> bytes:
+        return self.export_to_excel(self.full_results)
+
+    def generate_pdf(self) -> bytes:
+        return self.export_to_pdf(self.full_results)
+
+    def generate_csv(self) -> bytes:
+        if 'processed_dataframe' in self.full_results and isinstance(self.full_results['processed_dataframe'], pd.DataFrame) and not self.full_results['processed_dataframe'].empty:
+            return self.full_results['processed_dataframe'].to_csv(index=False).encode('utf-8')
+        ov_df = self._dict_to_summary_table(self.full_results.get('overall', {}))
+        return ov_df.to_csv(index=False).encode('utf-8')
+
     @staticmethod
     def _dict_to_summary_table(stats_dict: Dict[str, Any]) -> pd.DataFrame:
         """Converts statistical dictionary into a flat Pandas DataFrame for Excel export."""
