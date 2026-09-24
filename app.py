@@ -44,103 +44,137 @@ CUSTOM_CSS = """
 <style>
     /* Main Background & Clean Typography */
     .stApp {
-        background-color: #F8FAFC;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        color: #0F172A;
+        background-color: #F8FAFC !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        color: #0F172A !important;
     }
     
-    /* Hero Banner */
-    .hero-banner {
-        background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%);
-        border-radius: 16px;
-        padding: 2.2rem;
-        color: white;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+    /* Georgia Serif Header Titles matching Screenshots 1-5 */
+    h1, h2, h3, .serif-header {
+        font-family: Georgia, "Times New Roman", Times, serif !important;
+        color: #0F172A !important;
+        font-weight: 700 !important;
     }
-    .hero-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        margin-bottom: 0.5rem;
-        color: #FFFFFF;
+    
+    /* Primary Buttons Styling (Dark Forest Green #166534) */
+    button[kind="primary"] {
+        background-color: #166534 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
     }
-    .hero-subtitle {
-        font-size: 1.02rem;
-        color: #CBD5E1;
-        margin-bottom: 1.2rem;
-        line-height: 1.6;
+    button[kind="primary"]:hover {
+        background-color: #15803D !important;
     }
-
-    /* Workflow Pipeline Step Badges */
-    .pipeline-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
-        margin-top: 1rem;
+    
+    /* Secondary Action Buttons */
+    button[kind="secondary"] {
+        background-color: #475569 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
     }
-    .pipeline-step {
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 0.4rem 0.8rem;
-        border-radius: 8px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #E2E8F0;
-    }
-    .pipeline-arrow {
-        color: #818CF8;
-        font-weight: 800;
-        font-size: 0.9rem;
+    button[kind="secondary"]:hover {
+        background-color: #334155 !important;
     }
 
-    /* Feature Callout Box */
-    .feature-callout-box {
-        background-color: #F0FDF4;
-        border: 1.5px solid #86EFAC;
-        border-radius: 12px;
-        padding: 1.2rem 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    .feature-callout-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #166534;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Form Container */
-    .form-card {
+    /* Clean Card Box Containers */
+    .clean-card-box {
         background-color: #FFFFFF;
-        border-radius: 12px;
-        padding: 1.5rem;
         border: 1px solid #CBD5E1;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    
+    /* Upload Box Styling (Matching Screenshot 1) */
+    .upload-container-box {
+        background-color: #FAFAFA;
+        border: 2px dashed #94A3B8;
+        border-radius: 8px;
+        padding: 2.2rem 1.5rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .upload-icon-style {
+        font-size: 2.5rem;
+        color: #475569;
+        margin-bottom: 0.3rem;
+    }
+    .upload-title-style {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0F172A;
+    }
+    .upload-sub-style {
+        font-size: 0.85rem;
+        color: #64748B;
+        margin-top: 0.2rem;
     }
 
-    /* KPI Cards */
+    /* Privacy Banner (Matching Screenshot 1) */
+    .privacy-info-banner {
+        background-color: #E2E8F0;
+        border-radius: 4px;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #334155;
+        margin-bottom: 1.2rem;
+    }
+
+    /* Metric Cards (Matching Screenshots 4 & 5) */
     .kpi-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 1rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        text-align: center;
+        border-radius: 6px;
+        padding: 0.9rem;
+        text-align: left;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
     .kpi-val {
-        font-size: 1.7rem;
-        font-weight: 800;
+        font-family: Georgia, serif;
+        font-size: 1.9rem;
+        font-weight: 700;
         color: #0F172A;
+        line-height: 1.1;
     }
     .kpi-lbl {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 700;
         text-transform: uppercase;
         color: #64748B;
         letter-spacing: 0.05em;
-        margin-top: 0.2rem;
+        margin-top: 0.3rem;
+    }
+
+    /* Sub-cohort Horizontal Radio Pills Styling (Matching Screenshot 4 & 5) */
+    div[role="radiogroup"] {
+        gap: 0.5rem !important;
+    }
+    div[role="radiogroup"] label {
+        background-color: #E2E8F0 !important;
+        border-radius: 20px !important;
+        padding: 0.35rem 0.9rem !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        color: #1E293B !important;
+        border: none !important;
+    }
+    div[role="radiogroup"] label[aria-checked="true"], div[role="radiogroup"] label:has(input:checked) {
+        background-color: #166534 !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* Footer Disclaimer (Matching Screenshot 1 & 3) */
+    .footer-disclaimer-text {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #64748B;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
     }
 </style>
 """
@@ -508,22 +542,47 @@ def render_unified_results(full_results: dict, qc_report: dict):
             st.plotly_chart(fig_donut, use_container_width=True)
 
 # -----------------------------------------------------------------------------
-# VIEW 1: SINGLE CONSOLIDATED DATA ENTRY, UPLOAD & COLUMN MAPPING PAGE
+# 3-STEP WORKFLOW PIPELINE RENDERER (EXACT MATCH FOR USER SCREENSHOTS 1, 2, 3, 4, 5)
 # -----------------------------------------------------------------------------
-if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
-    st.markdown("""
-    <div class="hero-banner">
-        <div class="hero-title">Automated Population Pharmacogenomics Analysis Platform</div>
-        <div class="hero-subtitle">
-            Development of an Automated Population Pharmacogenomics Analysis Platform for Genotype, Allele, Diplotype and Phenotype Analysis. Supports continuous incremental sample insertion, Hardy–Weinberg Equilibrium (\\chi^2 & Haldane Exact Test), Geographic Population Stratification (South India, North India, East India, West India, Central India), State-Wise Pages, and CPIC CYP2C19 Metabolizer Phenotype Classification.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+def render_workflow_pipeline(df_raw, full_results, qc_report):
+    if 'workflow_step' not in st.session_state:
+        st.session_state['workflow_step'] = '3 · Results' if has_active_data() else '1 · Upload'
 
-    col_top1, col_top2 = st.columns([1.2, 0.8])
-    with col_top1:
-        st.markdown("### 📂 Upload Dataset File")
-        file_upload = st.file_uploader("Select Excel (.xlsx, .xls) or CSV file", type=["xlsx", "xls", "csv"], key="single_entry_uploader")
+    step_cols = st.columns(3)
+    t1 = "primary" if st.session_state['workflow_step'] == '1 · Upload' else "secondary"
+    t2 = "primary" if st.session_state['workflow_step'] == '2 · Map columns' else "secondary"
+    t3 = "primary" if st.session_state['workflow_step'] == '3 · Results' else "secondary"
+
+    if step_cols[0].button("1 · Upload", use_container_width=True, type=t1, key="nav_btn_step1"):
+        st.session_state['workflow_step'] = '1 · Upload'
+        st.rerun()
+
+    if step_cols[1].button("2 · Map columns", use_container_width=True, type=t2, key="nav_btn_step2"):
+        st.session_state['workflow_step'] = '2 · Map columns'
+        st.rerun()
+
+    if step_cols[2].button("3 · Results", use_container_width=True, type=t3, key="nav_btn_step3"):
+        st.session_state['workflow_step'] = '3 · Results'
+        st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # STEP 1: UPLOAD (Matching Image 1)
+    # -------------------------------------------------------------------------
+    if st.session_state['workflow_step'] == '1 · Upload':
+        st.markdown("## Upload genotype dataset")
+        st.caption('Excel (.xlsx/.csv) with one row per sample: Sample ID, Gender, DOB, region/location, and genotype columns for each SNP (e.g. "GA", "G/A", "AA").')
+
+        st.markdown("""
+        <div class="upload-container-box">
+            <div class="upload-icon-style">⇧</div>
+            <div class="upload-title-style">Click to choose a file, or drag it here</div>
+            <div class="upload-sub-style">.xlsx, .xls, or .csv — first row must be headers</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        file_upload = st.file_uploader("Select dataset file", type=["xlsx", "xls", "csv"], key="w_step1_uploader", label_visibility="collapsed")
         if file_upload is not None:
             try:
                 if file_upload.name.endswith('.csv'):
@@ -533,199 +592,236 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
                 clear_deletion_flag()
                 st.session_state['uploaded_df'] = df_load
                 st.session_state['mapped_cols'] = {}
+                st.session_state['workflow_step'] = '2 · Map columns'
                 st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
                 st.rerun()
             except Exception as e:
                 st.error(f"Error loading file: {e}")
 
-    with col_top2:
-        st.markdown("### 📊 Dataset Status & Actions")
-        curr_sample_count = full_results['overall']['sample_count'] if full_results else 0
-        st.metric("Total Validated Samples", f"{curr_sample_count:,}")
-        st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
-        
-        col_act1, col_act2 = st.columns(2)
-        with col_act1:
-            if st.button("🗑️ Delete Data (Reset)", use_container_width=True):
-                reset_all_data()
-                st.success("All data cleared!")
+        st.markdown("""
+        <div class="privacy-info-banner">
+            No data leaves your browser. Parsing and all statistics run locally.
+        </div>
+        """, unsafe_allow_html=True)
+
+        c_space, c_next = st.columns([0.75, 0.25])
+        with c_next:
+            if st.button("Continue →", type="primary", use_container_width=True, key="btn_step1_cont"):
+                st.session_state['workflow_step'] = '2 · Map columns'
                 st.rerun()
-        with col_act2:
-            if os.path.exists(demo_file_path):
-                if st.button("🔄 Reload Demo Data", use_container_width=True):
-                    reload_demo_data()
-                    st.success("Demo data loaded!")
+
+        st.divider()
+
+        with st.expander("🛠️ Advanced Workspace Actions: Reload Demo Data, Manual Entry & Deletion", expanded=False):
+            c1, c2 = st.columns(2)
+            with c1:
+                if os.path.exists(demo_file_path):
+                    if st.button("🔄 Reload Demo Dataset (1,044 Samples)", use_container_width=True, key="btn_exp_demo"):
+                        reload_demo_data()
+                        st.session_state['workflow_step'] = '3 · Results'
+                        st.success("Demo dataset loaded!")
+                        st.rerun()
+            with c2:
+                if st.button("🗑️ Delete Data (Reset)", use_container_width=True, key="btn_exp_reset"):
+                    reset_all_data()
+                    st.success("All data cleared!")
                     st.rerun()
 
-    st.divider()
-
-    # SECTION 2: MAP COLUMNS (Matching image media_1789937760866.png)
-    st.markdown("## 📂 Map your columns")
-    num_cols = len(df_raw.columns) if df_raw is not None else 0
-    num_rows = len(df_raw) if df_raw is not None else 0
-    st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
-
-    if df_raw is not None and len(df_raw.columns) > 0:
-        all_cols = list(df_raw.columns)
-        
-        def find_default(patterns, cols):
-            for pattern in patterns:
-                for c in cols:
-                    if pattern.lower() in str(c).lower():
-                        return c
-            return cols[0] if cols else ""
-
-        col_m1, col_m2, col_m3 = st.columns(3)
-        sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
-        gender_def = find_default(['gender', 'sex'], all_cols)
-        region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
-        
-        sel_sid = col_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
-        sel_gen = col_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
-        sel_reg = col_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### CYP2C19 SNP columns")
-        st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
-        
-        # SNP Box 1: rs4244285 (*2)
-        st.markdown("""
-        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
-            <h5 style="margin-top: 0; color: #0F172A;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
-        </div>
-        """, unsafe_allow_html=True)
-        c1_1, c1_2, c1_3 = st.columns(3)
-        cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
-        sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="snp2_col")
-        c1_2.text_input("Reference allele (*2)", value="G", key="ref_2")
-        c1_3.text_input("Variant allele (*2)", value="A", key="var_2")
-        
-        # SNP Box 2: rs4986893 (*3)
-        st.markdown("""
-        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
-            <h5 style="margin-top: 0; color: #0F172A;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
-        </div>
-        """, unsafe_allow_html=True)
-        c2_1, c2_2, c2_3 = st.columns(3)
-        cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
-        sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="snp3_col")
-        c2_2.text_input("Reference allele (*3)", value="G", key="ref_3")
-        c2_3.text_input("Variant allele (*3)", value="A", key="var_3")
-        
-        # SNP Box 3: rs12248560 (*17)
-        st.markdown("""
-        <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;">
-            <h5 style="margin-top: 0; color: #0F172A;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
-        </div>
-        """, unsafe_allow_html=True)
-        c3_1, c3_2, c3_3 = st.columns(3)
-        cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
-        sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="snp17_col")
-        c3_2.text_input("Reference allele (*17)", value="C", key="ref_17")
-        c3_3.text_input("Variant allele (*17)", value="T", key="var_17")
-
-        st.session_state['mapped_cols'] = {
-            sel_sid: 'Sample_ID',
-            sel_gen: 'Gender',
-            sel_reg: 'Native_Place',
-            sel_cyp2: 'CYP2C19*2',
-            sel_cyp3: 'CYP2C19*3',
-            sel_cyp17: 'CYP2C19*17'
-        }
-
-    st.divider()
-
-    # SECTION 3: MANUAL SAMPLE DATA ENTRY FORM
-    st.markdown("### ➕ Manual Sample Data Entry Form")
-    st.caption("Insert individual sample records. Validation rules: CYP2C19*2 accepts GG/GA/AA; CYP2C19*3 accepts GG only; CYP2C19*17 accepts CC/CT/TT.")
-    
-    with st.form("manual_sample_form_single", clear_on_submit=True):
-        f_c1, f_c2 = st.columns(2)
-        in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
-        in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
-        
-        f_c3, f_c4 = st.columns(2)
-        in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
-        in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
-        
-        in_native = st.text_input("Native Place (City / District)", value=in_state)
-        in_3gen = st.selectbox("Is their family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
-        
-        st.markdown("##### CYP2C19 Target Genotypes")
-        fg1, fg2, fg3 = st.columns(3)
-        in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid Call)"])
-        in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "Missing", "GA (Invalid Call)", "AA (Invalid Call)"])
-        in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid Call)"])
-        
-        submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
-        
-        if submit_sample:
-            # Strip out (Invalid Call) suffix if user clicked test option
-            cyp2_val = in_cyp2.split(' ')[0]
-            cyp3_val = in_cyp3.split(' ')[0]
-            cyp17_val = in_cyp17.split(' ')[0]
-
-            new_row = {
-                'sample ID': in_sid,
-                'Gender': in_gender,
-                'Date of Birth': in_dob,
-                'Native place ': in_native,
-                'State': in_state,
-                'Test requested': 'CYP2C19 Genotyping',
-                'Is their family lived at Native place for past 3 generations?': in_3gen,
-                'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else cyp2_val,
-                'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else cyp3_val,
-                'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
-            }
+            st.markdown("#### ➕ Manual Sample Data Entry Form")
+            st.caption("Insert individual sample records. Validation rules: CYP2C19*2 accepts GG/GA/AA; CYP2C19*3 accepts GG only; CYP2C19*17 accepts CC/CT/TT.")
             
-            clear_deletion_flag()
-            if st.session_state['uploaded_df'] is not None and len(st.session_state['uploaded_df']) > 0:
-                st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
-            else:
-                st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+            with st.form("manual_sample_form_single", clear_on_submit=True):
+                f_c1, f_c2 = st.columns(2)
+                in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
+                in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
                 
-            st.success(f"Sample {in_sid} added successfully!")
-            st.rerun()
+                f_c3, f_c4 = st.columns(2)
+                in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
+                in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
+                
+                in_native = st.text_input("Native Place (City / District)", value=in_state)
+                in_3gen = st.selectbox("Is their family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
+                
+                st.markdown("##### CYP2C19 Target Genotypes")
+                fg1, fg2, fg3 = st.columns(3)
+                in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid Call)"])
+                in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "Missing", "GA (Invalid Call)", "AA (Invalid Call)"])
+                in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid Call)"])
+                
+                submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
+                
+                if submit_sample:
+                    cyp2_val = in_cyp2.split(' ')[0]
+                    cyp3_val = in_cyp3.split(' ')[0]
+                    cyp17_val = in_cyp17.split(' ')[0]
 
-    st.divider()
+                    new_row = {
+                        'sample ID': in_sid,
+                        'Gender': in_gender,
+                        'Date of Birth': in_dob,
+                        'Native place ': in_native,
+                        'State': in_state,
+                        'Test requested': 'CYP2C19 Genotyping',
+                        'Is their family lived at Native place for past 3 generations?': in_3gen,
+                        'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else cyp2_val,
+                        'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else cyp3_val,
+                        'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
+                    }
+                    
+                    clear_deletion_flag()
+                    if st.session_state['uploaded_df'] is not None and len(st.session_state['uploaded_df']) > 0:
+                        st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
+                    else:
+                        st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+                        
+                    st.session_state['workflow_step'] = '3 · Results'
+                    st.success(f"Sample {in_sid} added successfully!")
+                    st.rerun()
 
-    # SECTION 4: SELECTIVE SAMPLE DELETION / DATA MANAGEMENT
-    st.markdown("### 🗑️ Manage & Delete Specific Sample Records")
-    st.caption("Permanently delete individual or multiple selected sample records from your active dataset.")
-    
-    if df_raw is not None and len(df_raw) > 0:
-        sid_col_candidates = [c for c in df_raw.columns if 'sample' in str(c).lower() or 'id' in str(c).lower()]
-        target_sid_col = sid_col_candidates[0] if sid_col_candidates else df_raw.columns[0]
-        
-        sample_list = list(df_raw[target_sid_col].astype(str).unique())
-        selected_to_delete = st.multiselect("Select Sample ID(s) to Delete Permanently:", sample_list, key="delete_multiselect")
-        
-        if st.button("❌ Permanently Delete Selected Samples", type="secondary"):
-            if selected_to_delete:
-                st.session_state['uploaded_df'] = df_raw[~df_raw[target_sid_col].astype(str).isin(selected_to_delete)].reset_index(drop=True)
-                for sid in selected_to_delete:
-                    try:
-                        db_manager.delete_sample_by_id(sid)
-                    except Exception:
-                        pass
-                try:
-                    st.cache_data.clear()
-                except Exception:
-                    pass
-                st.success(f"Permanently deleted {len(selected_to_delete)} sample record(s)!")
+        st.markdown("""
+        <div class="footer-disclaimer-text">
+            PGx Pop MVP · CYP2C19 calling uses a simplified unphased-genotype heuristic — see notes in the CYP2C19 tab · Not for clinical use without independent validation.
+        </div>
+        """, unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # STEP 2: MAP COLUMNS (Matching Image 2)
+    # -------------------------------------------------------------------------
+    elif st.session_state['workflow_step'] == '2 · Map columns':
+        st.markdown("## Map your columns")
+        num_cols = len(df_raw.columns) if df_raw is not None else 0
+        num_rows = len(df_raw) if df_raw is not None else 0
+        st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
+
+        if df_raw is not None and len(df_raw.columns) > 0:
+            all_cols = list(df_raw.columns)
+            def find_default(patterns, cols):
+                for pattern in patterns:
+                    for c in cols:
+                        if pattern.lower() in str(c).lower():
+                            return c
+                return cols[0] if cols else ""
+
+            c_m1, c_m2, c_m3 = st.columns(3)
+            sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
+            gender_def = find_default(['gender', 'sex'], all_cols)
+            region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
+
+            sel_sid = c_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
+            sel_gen = c_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
+            sel_reg = c_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### CYP2C19 SNP columns")
+            st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
+
+            # Box 1: rs4244285 (*2)
+            st.markdown("""
+            <div class="clean-card-box">
+                <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            c1_1, c1_2, c1_3 = st.columns(3)
+            cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
+            sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="w_map_cyp2")
+            c1_2.text_input("Reference allele (*2)", value="G", key="w_map_ref2")
+            c1_3.text_input("Variant allele (*2)", value="A", key="w_map_var2")
+
+            # Box 2: rs4986893 (*3)
+            st.markdown("""
+            <div class="clean-card-box">
+                <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            c2_1, c2_2, c2_3 = st.columns(3)
+            cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
+            sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="w_map_cyp3")
+            c2_2.text_input("Reference allele (*3)", value="G", key="w_map_ref3")
+            c2_3.text_input("Variant allele (*3)", value="A", key="w_map_var3")
+
+            # Box 3: rs12248560 (*17)
+            st.markdown("""
+            <div class="clean-card-box">
+                <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
+            </div>
+            """, unsafe_allow_html=True)
+            c3_1, c3_2, c3_3 = st.columns(3)
+            cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
+            sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="w_map_cyp17")
+            c3_2.text_input("Reference allele (*17)", value="C", key="w_map_ref17")
+            c3_3.text_input("Variant allele (*17)", value="T", key="w_map_var17")
+
+            st.session_state['mapped_cols'] = {
+                sel_sid: 'Sample_ID',
+                sel_gen: 'Gender',
+                sel_reg: 'Native_Place',
+                sel_cyp2: 'CYP2C19*2',
+                sel_cyp3: 'CYP2C19*3',
+                sel_cyp17: 'CYP2C19*17'
+            }
+
+        c_b1, c_b2, c_b3 = st.columns([0.25, 0.5, 0.25])
+        with c_b1:
+            if st.button("← Back to Upload", use_container_width=True, key="btn_map_back"):
+                st.session_state['workflow_step'] = '1 · Upload'
                 st.rerun()
+        with c_b3:
+            if st.button("Continue to Results →", type="primary", use_container_width=True, key="btn_map_cont"):
+                st.session_state['workflow_step'] = '3 · Results'
+                st.rerun()
+
+    # -------------------------------------------------------------------------
+    # STEP 3: RESULTS (Matching Images 3, 4, 5)
+    # -------------------------------------------------------------------------
+    elif st.session_state['workflow_step'] == '3 · Results':
+        st.markdown("## Overview")
+        render_unified_results(full_results, qc_report)
+
+        st.divider()
+        st.markdown("### Export")
+        st.caption("Download the full result set for the current group selection.")
+
+        e1, e2, e3, e_remap = st.columns([0.25, 0.25, 0.25, 0.25])
+
+        rep_gen = ReportGenerator(full_results, qc_report) if has_active_data() else None
+
+        with e1:
+            if rep_gen:
+                excel_bytes = rep_gen.generate_excel()
+                st.download_button("⬇ Excel (.xlsx, all sheets)", data=excel_bytes, file_name="PGx_Population_Report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, key="btn_exp_excel")
             else:
-                st.warning("Please select at least one sample ID to delete.")
-    else:
-        st.info("ℹ️ No active sample records available to delete.")
+                st.button("⬇ Excel (.xlsx, all sheets)", disabled=True, use_container_width=True)
+
+        with e2:
+            if rep_gen:
+                csv_bytes = rep_gen.generate_csv()
+                st.download_button("⬇ CSV (summary)", data=csv_bytes, file_name="PGx_Population_Summary.csv", mime="text/csv", use_container_width=True, key="btn_exp_csv")
+            else:
+                st.button("⬇ CSV (summary)", disabled=True, use_container_width=True)
+
+        with e3:
+            if rep_gen:
+                pdf_bytes = rep_gen.generate_pdf()
+                st.download_button("⬇ PDF (print view)", data=pdf_bytes, file_name="PGx_Population_Report.pdf", mime="application/pdf", use_container_width=True, key="btn_exp_pdf")
+            else:
+                st.button("⬇ PDF (print view)", disabled=True, use_container_width=True)
+
+        with e_remap:
+            if st.button("← Re-map columns", use_container_width=True, key="btn_res_remap"):
+                st.session_state['workflow_step'] = '2 · Map columns'
+                st.rerun()
+
+        st.markdown("""
+        <div class="footer-disclaimer-text">
+            PGx Pop MVP · CYP2C19 calling uses a simplified unphased-genotype heuristic — see notes in the CYP2C19 tab · Not for clinical use without independent validation.
+        </div>
+        """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# VIEW 2: EXECUTIVE DASHBOARD (MATCHING SCREENSHOTS 1, 2, 3, 4)
+# VIEW ROUTING
 # -----------------------------------------------------------------------------
-elif nav_option == "📊 2. Executive Dashboard":
-    st.markdown("## 📊 Executive Summary Dashboard")
-    st.caption("Cohort Parameters, Regional Comparison & CPIC Phenotype Distributions")
-    render_unified_results(full_results, qc_report)
+if nav_option in ["🏠 1. Data Entry, Upload & Column Mapping", "📊 2. Executive Dashboard"]:
+    render_workflow_pipeline(df_raw, full_results, qc_report)
 
 # -----------------------------------------------------------------------------
 # VIEW 3: DATA QUALITY & MISSING AUDIT
