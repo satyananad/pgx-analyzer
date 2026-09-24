@@ -147,7 +147,7 @@ CUSTOM_CSS = """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 2. SESSION STATE MANAGEMENT
+# 2. SESSION STATE MANAGEMENT & DATA RESET UTILITIES
 # -----------------------------------------------------------------------------
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
@@ -159,6 +159,21 @@ if st.session_state['uploaded_df'] is None and os.path.exists(demo_file_path):
     st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
 
 db_manager = DatabaseManager()
+
+def reset_all_data():
+    """Clears session dataset, resets custom column mappings, and purges database."""
+    empty_cols = [
+        'sample ID', 'Gender', 'Date of Birth', 'Native place ', 'State',
+        'Test requested', 'Is their family lived at Native place for past 3 generations?',
+        'CYP2C19*2 (rs4244285)', 'CYP2C19*3 (rs4986893)', 'CYP2C19*17 ( rs12248560)'
+    ]
+    st.session_state['uploaded_df'] = pd.DataFrame(columns=empty_cols)
+    st.session_state['mapped_cols'] = {}
+    try:
+        db_manager.clear_database()
+    except Exception:
+        pass
+
 existing_sample_ids = db_manager.get_existing_sample_ids()
 
 # -----------------------------------------------------------------------------
@@ -189,9 +204,14 @@ with st.sidebar:
     )
     
     st.divider()
-    st.markdown("### Quick Action")
+    st.markdown("### Data Management")
+    if st.button("🗑️ Delete Existing Data (Start Fresh)", type="secondary", use_container_width=True):
+        reset_all_data()
+        st.success("All existing data deleted! Workspace reset to 0 samples.")
+        st.rerun()
+
     if os.path.exists(demo_file_path):
-        if st.button("🔄 Reload Workspace Dataset (1,044 Samples)", use_container_width=True):
+        if st.button("🔄 Reload Demo Dataset (1,044 Samples)", use_container_width=True):
             st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
             st.session_state['mapped_cols'] = {}
             st.success("Loaded workspace dataset!")
@@ -210,7 +230,8 @@ if df_raw is not None:
     full_results = DemographicStratifier.stratify_and_analyze(clean_df)
     processed_df = full_results['processed_dataframe']
     try:
-        db_manager.insert_batch(processed_df)
+        if len(processed_df) > 0:
+            db_manager.insert_batch(processed_df)
     except Exception:
         pass
 
@@ -218,8 +239,8 @@ if df_raw is not None:
 # REUSABLE UNIFIED RESULTS RENDERER (MATCHING SCREENSHOTS 1, 2, 3, 4)
 # -----------------------------------------------------------------------------
 def render_unified_results(full_results: dict, qc_report: dict):
-    if full_results is None or qc_report is None:
-        st.info("Please upload a dataset or use the default dataset to view results.")
+    if full_results is None or qc_report is None or full_results['overall']['sample_count'] == 0:
+        st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset or enter samples manually on Page 1.")
         return
 
     ov = full_results['overall']
@@ -445,11 +466,24 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
                 st.error(f"Error loading file: {e}")
 
     with col_top2:
-        st.markdown("### 📊 Dataset Status")
-        if full_results is not None:
-            st.metric("Total Validated Samples", f"{full_results['overall']['sample_count']:,}")
-            st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
-            st.info("💡 Data uploaded is mapped and analyzed automatically.")
+        st.markdown("### 📊 Dataset Status & Actions")
+        curr_sample_count = full_results['overall']['sample_count'] if full_results else 0
+        st.metric("Total Validated Samples", f"{curr_sample_count:,}")
+        st.metric("Target Pharmacogene", "CYP2C19 (*2, *3, *17)")
+        
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            if st.button("🗑️ Delete Data (Reset)", use_container_width=True):
+                reset_all_data()
+                st.success("All data cleared!")
+                st.rerun()
+        with col_act2:
+            if os.path.exists(demo_file_path):
+                if st.button("🔄 Reload Demo Data", use_container_width=True):
+                    st.session_state['uploaded_df'] = pd.read_excel(demo_file_path)
+                    st.session_state['mapped_cols'] = {}
+                    st.success("Demo data loaded!")
+                    st.rerun()
 
     st.divider()
 
@@ -459,7 +493,7 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
     num_rows = len(df_raw) if df_raw is not None else 0
     st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
 
-    if df_raw is not None:
+    if df_raw is not None and len(df_raw.columns) > 0:
         all_cols = list(df_raw.columns)
         
         def find_default(patterns, cols):
@@ -572,7 +606,7 @@ if nav_option == "🏠 1. Data Entry, Upload & Column Mapping":
                 'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
             }
             
-            if st.session_state['uploaded_df'] is not None:
+            if st.session_state['uploaded_df'] is not None and len(st.session_state['uploaded_df']) > 0:
                 st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
             else:
                 st.session_state['uploaded_df'] = pd.DataFrame([new_row])
@@ -921,7 +955,7 @@ elif nav_option == "📄 10. Live Preview & Download Report":
     st.markdown("## 📄 Live Report Preview & Multi-Format Exporters")
     st.caption("Review full statistical document preview below before initiating file export.")
     
-    if full_results is not None:
+    if full_results is not None and full_results['overall']['sample_count'] > 0:
         st.markdown("### 📥 Download Official Reports")
         d1, d2, d3 = st.columns(3)
         
@@ -933,6 +967,8 @@ elif nav_option == "📄 10. Live Preview & Download Report":
         
         pdf_bytes = ReportGenerator.export_to_pdf(full_results)
         d3.download_button("⬇ Download PDF Report", data=pdf_bytes, file_name="PGx_Executive_Summary.pdf", mime="application/pdf", use_container_width=True)
+    else:
+        st.info("ℹ️ Workspace is empty. Add data to enable report generation.")
 
 # -----------------------------------------------------------------------------
 # FOOTER NOTE
