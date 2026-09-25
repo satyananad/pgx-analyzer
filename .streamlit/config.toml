@@ -1,11 +1,5 @@
-[theme]
-primaryColor = "#10B981"
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#0F172A"
-font = "sans serif"
+[client]
+toolbarMode = "off"
 
-[server]
-headless = true
-enableCORS = true
-port = 8501
+[ui]
+hideTopBar = true

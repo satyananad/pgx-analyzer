@@ -199,6 +199,21 @@ CUSTOM_CSS = """
         margin-top: 2.5rem;
         margin-bottom: 1rem;
     }
+
+    /* Hide Streamlit Header, Footer, MainMenu, Toolbar, and Community Cloud Badges */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stHeader"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stReportViewer"] footer {display: none !important;}
+    .viewerBadge_container__1QSVn {display: none !important;}
+    .viewerBadge_link__1S137 {display: none !important;}
+    div[class*="viewerBadge"] {display: none !important;}
+    div[data-testid="user-avatar"] {display: none !important;}
+    button[title*="Streamlit"] {display: none !important;}
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
