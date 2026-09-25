@@ -1,3 +1,14 @@
+---
+title: PGx Analyzer
+emoji: 🧬
+colorFrom: blue
+colorTo: indigo
+sdk: streamlit
+sdk_version: 1.41.1
+app_file: app.py
+pinned: false
+---
+
 # 🧬 Automated Population Pharmacogenomics Analysis Platform
 
 An industry-level, production-grade automated platform designed for genotype, allele frequency, Hardy–Weinberg Equilibrium (HWE), regional/gender demographic stratification, and CYP2C19 star allele/diplotype/phenotype classification.
