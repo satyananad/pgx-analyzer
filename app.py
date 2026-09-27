@@ -571,16 +571,17 @@ def render_unified_results(full_results: dict, qc_report: dict):
             hw = s_res.get('hwe', {})
             gc = s_res.get('genotype_counts', {})
             exp_c = hw.get('expected_counts', {})
+            chi2_val = hw.get('chi2_stat', 0.0)
+            chi2_str = f"⚠️ {chi2_val:.4f} (Chi² > 3.841)" if chi2_val >= 3.841 else f"{chi2_val:.4f}"
             hwe_table_rows.append({
                 'SNP Variant': snp_name,
                 'Valid Samples (N)': s_res.get('valid_samples', 0),
                 'Observed Genotypes': " / ".join([f"{k}:{v}" for k, v in gc.items()]),
                 'Expected Genotypes': " / ".join([f"{k}:{exp_c.get(k, 0)}" for k in gc.keys()]),
-                'Chi-Square (χ²)': hw.get('chi2_stat', 0),
+                'Chi-Square (χ²)': chi2_str,
                 'Degrees of Freedom': hw.get('df', 1),
-                'P-Value': hw.get('p_value', 1.0),
-                'Exact Test P-Value': hw.get('exact_p_value', 1.0),
-                'Interpretation': hw.get('interpretation', 'In HWE')
+                'P-Value': f"{hw.get('p_value', 1.0):.4f}",
+                'Exact Test P-Value': f"{hw.get('exact_p_value', 1.0):.4f}"
             })
             
         c_hwe_tbl, c_hwe_fig = st.columns([1.2, 0.8])
@@ -800,30 +801,55 @@ def render_unified_results(full_results: dict, qc_report: dict):
             st.plotly_chart(fig_geo_pm, use_container_width=True)
 
         st.markdown("#### Comprehensive Regional Statistical Summary Table")
+        sel_reg_snp = st.selectbox("Select Target SNP Variant for Regional Breakdown:", ["CYP2C19*2", "CYP2C19*3", "CYP2C19*17"], index=0, key="sb_reg_snp_select")
         
-        cyp2_rows = [
-            ('A Count (Variant Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('A', 0)),
-            ('G Count (Reference Allele)', lambda s: s.get('CYP2C19*2', {}).get('allele_counts', {}).get('G', 0)),
-            ('Total Allele Count (2N)', lambda s: sum(s.get('CYP2C19*2', {}).get('allele_counts', {}).values())),
-            ('GA COUNT (Heterozygote)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GA', 0)),
-            ('AA COUNT (Homozygous Variant)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('AA', 0)),
-            ('GG COUNT (Homozygous Wildtype)', lambda s: s.get('CYP2C19*2', {}).get('genotype_counts', {}).get('GG', 0)),
-            ('Total Sample N', lambda s: sum(s.get('CYP2C19*2', {}).get('genotype_counts', {}).values())),
-            ('Allele Frequency F(A)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('A', 0)),
-            ('Allele Frequency F(G)', lambda s: s.get('CYP2C19*2', {}).get('allele_freqs', {}).get('G', 0)),
-            ('Chi-Square (χ²)', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('chi2_stat', 0)),
-            ('P VALUE', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('p_value', 1.0)),
-            ('HWE Interpretation', lambda s: s.get('CYP2C19*2', {}).get('hwe', {}).get('interpretation', 'In HWE'))
+        snp_conf_sel = SNP_CONFIG.get(sel_reg_snp, {})
+        ref_al = snp_conf_sel.get('ref_allele', 'G')
+        var_al = snp_conf_sel.get('var_allele', 'A')
+        wt_g = snp_conf_sel.get('wildtype_genotype', 'GG')
+        het_g = snp_conf_sel.get('het_genotype', 'GA')
+        var_g = snp_conf_sel.get('hom_var_genotype', 'AA')
+
+        reg_rows_config = [
+            (f'{var_al} Count (Variant Allele)', lambda s, snp=sel_reg_snp, va=var_al: s.get(snp, {}).get('allele_counts', {}).get(va, 0)),
+            (f'{ref_al} Count (Reference Allele)', lambda s, snp=sel_reg_snp, ra=ref_al: s.get(snp, {}).get('allele_counts', {}).get(ra, 0)),
+            ('Total Allele Count (2N)', lambda s, snp=sel_reg_snp: sum(s.get(snp, {}).get('allele_counts', {}).values())),
+            (f'{het_g} COUNT (Heterozygote)', lambda s, snp=sel_reg_snp, hg=het_g: s.get(snp, {}).get('genotype_counts', {}).get(hg, 0)),
+            (f'{var_g} COUNT (Homozygous Variant)', lambda s, snp=sel_reg_snp, vg=var_g: s.get(snp, {}).get('genotype_counts', {}).get(vg, 0)),
+            (f'{wt_g} COUNT (Homozygous Wildtype)', lambda s, snp=sel_reg_snp, wg=wt_g: s.get(snp, {}).get('genotype_counts', {}).get(wg, 0)),
+            ('Total Sample N', lambda s, snp=sel_reg_snp: sum(s.get(snp, {}).get('genotype_counts', {}).values())),
+            (f'Allele Frequency F({var_al})', lambda s, snp=sel_reg_snp, va=var_al: s.get(snp, {}).get('allele_freqs', {}).get(va, 0)),
+            (f'Allele Frequency F({ref_al})', lambda s, snp=sel_reg_snp, ra=ref_al: s.get(snp, {}).get('allele_freqs', {}).get(ra, 0)),
+            ('Chi-Square (χ²)', lambda s, snp=sel_reg_snp: s.get(snp, {}).get('hwe', {}).get('chi2_stat', 0)),
+            ('P VALUE', lambda s, snp=sel_reg_snp: s.get(snp, {}).get('hwe', {}).get('p_value', 1.0))
         ]
         
-        cyp2_matrix = []
-        for label, func in cyp2_rows:
-            r_dict = {'Statistical Parameter (*2)': label}
+        reg_matrix = []
+        for label, func in reg_rows_config:
+            r_dict = {f'Statistical Parameter ({sel_reg_snp})': label}
             for r in regions:
                 r_dict[r] = func(reg.get(r, {}).get('snps', {}))
-            cyp2_matrix.append(r_dict)
+            reg_matrix.append(r_dict)
             
-        st.dataframe(pd.DataFrame(cyp2_matrix), use_container_width=True)
+        st.dataframe(pd.DataFrame(reg_matrix), use_container_width=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### 💊 Regional & State-Wise Metabolizer Phenotype Distribution Matrix")
+        st.caption("Distribution of CPIC CYP2C19 Metabolizer Phenotypes across South, North, East, West, and Central India.")
+
+        reg_pheno_matrix = []
+        for r_name in regions:
+            r_data = reg.get(r_name, {})
+            p_dict = r_data.get('cyp2c19_summary', {}).get('phenotypes', {})
+            row = {'Population Region': r_name, 'Total Sample N': r_data.get('sample_count', 0)}
+            for p_cat in PHENOTYPE_ORDER:
+                cnt = p_dict.get(p_cat, {}).get('count', 0)
+                pct = p_dict.get(p_cat, {}).get('percentage', 0.0)
+                p_label = p_cat.split(' (')[0]
+                row[p_label] = f"{cnt} ({pct:.1f}%)"
+            reg_pheno_matrix.append(row)
+
+        st.table(pd.DataFrame(reg_pheno_matrix))
 
     # -------------------------------------------------------------------------
     # TAB 8: GENDER-WISE ANALYSIS

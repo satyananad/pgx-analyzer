@@ -96,10 +96,9 @@ class DataQCEngine:
         sample_ids = self._get_series(df, 'Sample_ID').astype(str).str.strip()
         df['Sample_ID'] = sample_ids
         
-        # Check duplicates within batch and against existing DB records
+        # Check duplicates within batch file
         duplicated_in_file = df[df['Sample_ID'].duplicated()]['Sample_ID'].tolist()
-        duplicated_in_db = df[df['Sample_ID'].isin(self.existing_sample_ids)]['Sample_ID'].tolist()
-        all_duplicates = list(set(duplicated_in_file + duplicated_in_db))
+        all_duplicates = list(set(duplicated_in_file))
         
         # Clean Gender
         if 'Gender' in df.columns:
