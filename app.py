@@ -984,33 +984,35 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
     main_tab_home, main_tab_about = st.tabs(["🏠 Home Workspace", "ℹ️ About Platform"])
 
     with main_tab_about:
-        # High-contrast, crystal-clear Dark Purple/Bluish banner header
+        # High-contrast Dark Purple/Bluish banner header with highlighted title box
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #1E3A8A 100%); border-radius: 14px; padding: 2.2rem 2.5rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 2rem; box-shadow: 0 10px 25px rgba(30, 27, 75, 0.35); border: 1px solid #4338CA;">
-            <h1 style="color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 1.95rem; margin-top: 0; margin-bottom: 0.8rem; letter-spacing: -0.02em;">
-                🧬 Automated Population Pharmacogenomics Analysis Platform
-            </h1>
-            <p style="color: #F1F5F9; font-size: 1.05rem; line-height: 1.7; font-weight: 400; margin-bottom: 1.5rem;">
-                <strong>PGx Analytics Pro</strong> is a standardized, automated population pharmacogenomics analysis software designed for end-to-end evaluation of star-alleles, genotype frequencies, Hardy–Weinberg Equilibrium (HWE), and CPIC metabolizer phenotypes across diverse geographic cohorts.
+        <div style="background: linear-gradient(135deg, #1E1B4B 0%, #2E1065 50%, #1E3A8A 100%); border-radius: 14px; padding: 2.2rem 2.5rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 1.8rem; box-shadow: 0 8px 24px rgba(30, 27, 75, 0.35); border: 1px solid #4338CA;">
+            <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 0.6rem 1.2rem; display: inline-block; margin-bottom: 0.9rem;">
+                <h1 style="color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 1.75rem; margin: 0; letter-spacing: -0.01em;">
+                    🧬 Automated Population Pharmacogenomics Analysis Platform
+                </h1>
+            </div>
+            <p style="color: #F1F5F9; font-size: 1.05rem; line-height: 1.65; font-weight: 400; margin-bottom: 1.5rem;">
+                <strong>PGx Analytics Pro</strong> is an automated population pharmacogenomics software built for instant quality control, Hardy–Weinberg Equilibrium (HWE) testing, regional demographic stratification, and CPIC metabolizer phenotype translation.
             </p>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-top: 1.2rem;">
-                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
                     <div style="font-size: 0.8rem; text-transform: uppercase; color: #A7F3D0; font-weight: 800; letter-spacing: 0.05em;">Target Gene & SNPs</div>
                     <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">CYP2C19 (*2, *3, *17)</div>
                     <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">rs4244285, rs4986893, rs12248560</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
                     <div style="font-size: 0.8rem; text-transform: uppercase; color: #93C5FD; font-weight: 800; letter-spacing: 0.05em;">Statistical & HWE Engine</div>
                     <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
                     <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">Threshold χ² ≥ 3.841 (p ≤ 0.05)</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
                     <div style="font-size: 0.8rem; text-transform: uppercase; color: #FDE68A; font-weight: 800; letter-spacing: 0.05em;">Demographic Matrix</div>
                     <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Regional Macro-Zones</div>
                     <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">South, North, East, West, Central</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #F472B6; font-weight: 800; letter-spacing: 0.05em;">CPIC Clinical Calling</div>
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #F472B6; font-weight: 800; letter-spacing: 0.05em;">CPIC Phenotype Calling</div>
                     <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Metabolizer Classes</div>
                     <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">UM, RM, NM, IM, PM Phenotypes</div>
                 </div>
@@ -1018,63 +1020,17 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("### 📌 Platform Overview & Key Capabilities")
-        c_ab1, c_ab2 = st.columns(2)
-        with c_ab1:
-            st.info("""
-            **🎯 Purpose & Clinical Rationale**
-            Manual spreadsheet calculations in population genetics are prone to human formula errors, inconsistent Hardy–Weinberg Equilibrium (HWE) cutoff flags, and unstandardized CPIC phenotype assignments. 
-
-            This platform automates the end-to-end analytical pipeline—from raw Excel upload to automated statistical QC, Hardy–Weinberg calculation, regional demographic stratification, and export-ready publication reports.
-            """)
-        with c_ab2:
-            st.success("""
-            **🔒 Local Privacy & Embedded Database Architecture**
-            - **Local Execution**: All file parsing, genotype quality control, and statistical math execute locally within browser memory. No data is sent to external servers.
-            - **SQLite Storage**: Uploaded records are indexed in an embedded local SQLite database (`pgx_analysis.db`) with transactional batch history.
-            - **Multi-Format Export**: Generates comprehensive multi-tab Excel (`.xlsx`), summary CSV (`.csv`), and print-ready PDF (`.pdf`) reports.
-            """)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 🧬 Target Pharmacogene & Variant Specifications")
+        st.markdown("### 🛠️ What This Platform Currently Does")
         st.markdown("""
-        | Target Gene | Star Allele | dbSNP ID | Nucleotide Variant | Functional Impact | Clinical Phenotype Effect |
-        | :--- | :--- | :--- | :--- | :--- | :--- |
-        | **CYP2C19** | **\*1** | Reference | Wild-type | Normal Enzyme Function | Standard Drug Metabolism (Normal) |
-        | **CYP2C19** | **\*2** | `rs4244285` | c.681G>A | Aberrant Splicing Defect | No Function (Loss-of-Function) |
-        | **CYP2C19** | **\*3** | `rs4986893` | c.636G>A | Premature Stop Codon (W212X) | No Function (Loss-of-Function) |
-        | **CYP2C19** | **\*17** | `rs12248560` | c.-806C>T | Promoter Hyper-transcription | Increased Function (Gain-of-Function) |
+        - 📁 **Dataset Upload & Smart Mapping**: Supports Excel (`.xlsx`, `.xls`) and CSV files with flexible column mapping for Sample IDs, location, and genotype columns.
+        - 🔍 **Automated Quality Control (QC)**: Instant screening to count total samples, identify valid genotype calls, detect missing entries, and filter duplicate Sample IDs within uploaded files.
+        - 🧬 **Target SNP Genotyping**: Evaluates key `CYP2C19` pharmacogenetic variants (`*2` rs4244285, `*3` rs4986893, and `*17` rs12248560).
+        - ⚠️ **Hardy–Weinberg Equilibrium (HWE) Checks**: Automatically calculates allele frequencies and highlights statistically significant HWE deviations ($\chi^2 \ge 3.841$) in bright red.
+        - 🗺️ **Demographic & Regional Stratification**: Categorizes cohorts into 5 geographic macro-regions (South, North, East, West, Central) and calculates regional allele distribution matrices.
+        - 💊 **CPIC Metabolizer Phenotype Calling**: Automatically translates star-allele diplotypes into 5 standard clinical phenotypes: **Ultrarapid (UM)**, **Rapid (RM)**, **Normal (NM)**, **Intermediate (IM)**, and **Poor (PM)**.
+        - 🔒 **100% Browser-Side Privacy**: All data processing and database indexing (`pgx_analysis.db`) run locally on your device with zero cloud uploads.
+        - 📊 **One-Click Export**: Generates publication-ready multi-tab Excel (`.xlsx`), summary CSV (`.csv`), and PDF (`.pdf`) reports.
         """)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 🧮 Statistical Methodology & CPIC Guidelines")
-
-        with st.expander("📐 1. Quality Control & Duplicate Filtering Engine", expanded=True):
-            st.markdown("""
-            - **Sample QC Evaluation**: Evaluates raw dataset rows for duplicate Sample IDs within the uploaded file.
-            - **Call Rate Calculation**: Tracks valid genotype calls vs missing calls (`NaN`, `Missing`, or uncalled genotypes).
-            - **Canonical Allele Validation**: Verifies allele calls against allowed canonical representations (`CYP2C19*2`: GG/GA/AA; `CYP2C19*3`: GG; `CYP2C19*17`: CC/CT/TT).
-            """)
-
-        with st.expander("📊 2. Hardy–Weinberg Equilibrium (HWE) & Haldane Correction", expanded=True):
-            st.markdown(r"""
-            - **Allele Frequencies**: Calculated as $p = f(\text{REF})$ and $q = f(\text{ALT}) = 1 - p$.
-            - **Expected Genotype Counts**: 
-              $$E(AA) = N \cdot p^2, \quad E(AB) = 2 N \cdot p \cdot q, \quad E(BB) = N \cdot q^2$$
-            - **Pearson Chi-Square ($\chi^2$) Test**:
-              $$\chi^2 = \sum \frac{(O - E)^2}{E}$$
-            - **Threshold Warning**: Whenever $\chi^2 \ge 3.841$ ($p \le 0.05$ with 1 degree of freedom), the cell is automatically highlighted with a **bright warning indicator (⚠️ Chi² > 3.841)**.
-            - **Haldane Correction**: Applied to prevent division by zero in zero-count genotype cells.
-            """)
-
-        with st.expander("💊 3. CPIC Diplotype to Metabolizer Phenotype Assignment Rules", expanded=True):
-            st.markdown("""
-            - **Ultrarapid Metabolizer (UM)**: `*17/*17` (Increased enzymatic activity)
-            - **Rapid Metabolizer (RM)**: `*1/*17` (Slightly increased activity)
-            - **Normal Metabolizer (NM)**: `*1/*1` (Normal wild-type activity)
-            - **Intermediate Metabolizer (IM)**: `*1/*2`, `*1/*3`, `*2/*17`, `*3/*17` (Decreased activity)
-            - **Poor Metabolizer (PM)**: `*2/*2`, `*2/*3`, `*3/*3` (Complete loss of enzyme activity)
-            """)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
