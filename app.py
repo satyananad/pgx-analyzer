@@ -265,6 +265,7 @@ def reset_all_data():
     st.session_state['is_deleted'] = True
     st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
     st.session_state['mapped_cols'] = {}
+    st.session_state['last_uploaded_file_id'] = None
     st.session_state['workflow_step'] = '1 · Upload'
     
     # Write persistent disk marker so deletion survives app restarts, browser refreshes, and new tabs
@@ -956,19 +957,22 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
 
         file_upload = st.file_uploader("Select dataset file", type=["xlsx", "xls", "csv"], key="w_step1_uploader", label_visibility="collapsed")
         if file_upload is not None:
-            try:
-                if file_upload.name.endswith('.csv'):
-                    df_load = pd.read_csv(file_upload)
-                else:
-                    df_load = pd.read_excel(file_upload)
-                clear_deletion_flag()
-                st.session_state['uploaded_df'] = df_load
-                st.session_state['mapped_cols'] = {}
-                st.session_state['workflow_step'] = '2 · Map columns'
-                st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error loading file: {e}")
+            uploaded_file_id = f"{file_upload.name}_{file_upload.size}"
+            if st.session_state.get('last_uploaded_file_id') != uploaded_file_id:
+                try:
+                    if file_upload.name.endswith('.csv'):
+                        df_load = pd.read_csv(file_upload)
+                    else:
+                        df_load = pd.read_excel(file_upload)
+                    clear_deletion_flag()
+                    st.session_state['last_uploaded_file_id'] = uploaded_file_id
+                    st.session_state['uploaded_df'] = df_load
+                    st.session_state['mapped_cols'] = {}
+                    st.session_state['workflow_step'] = '3 · Results'
+                    st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error loading file: {e}")
 
         st.markdown("""
         <div class="privacy-info-banner">
