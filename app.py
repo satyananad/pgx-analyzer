@@ -21,6 +21,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+import io
 
 from core.qc import DataQCEngine
 from core.stratification import DemographicStratifier
@@ -959,20 +960,25 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
         if file_upload is not None:
             uploaded_file_id = f"{file_upload.name}_{file_upload.size}"
             if st.session_state.get('last_uploaded_file_id') != uploaded_file_id:
+                load_success = False
                 try:
-                    if file_upload.name.endswith('.csv'):
-                        df_load = pd.read_csv(file_upload)
+                    file_bytes = io.BytesIO(file_upload.getvalue())
+                    if file_upload.name.lower().endswith('.csv'):
+                        df_load = pd.read_csv(file_bytes)
                     else:
-                        df_load = pd.read_excel(file_upload)
+                        df_load = pd.read_excel(file_bytes)
                     clear_deletion_flag()
                     st.session_state['last_uploaded_file_id'] = uploaded_file_id
                     st.session_state['uploaded_df'] = df_load
                     st.session_state['mapped_cols'] = {}
                     st.session_state['workflow_step'] = '3 · Results'
-                    st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
-                    st.rerun()
+                    load_success = True
                 except Exception as e:
                     st.error(f"Error loading file: {e}")
+                
+                if load_success:
+                    st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
+                    st.rerun()
 
         st.markdown("""
         <div class="privacy-info-banner">
