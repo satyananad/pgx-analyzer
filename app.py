@@ -984,53 +984,107 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
     main_tab_home, main_tab_about = st.tabs(["🏠 Home Workspace", "ℹ️ About Platform"])
 
     with main_tab_about:
-        # High-contrast Dark Purple/Bluish banner header with highlighted title box
+        # Premium Executive Header Card with Glowing Title Pill Badge
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #1E1B4B 0%, #2E1065 50%, #1E3A8A 100%); border-radius: 14px; padding: 2.2rem 2.5rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 1.8rem; box-shadow: 0 8px 24px rgba(30, 27, 75, 0.35); border: 1px solid #4338CA;">
-            <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; padding: 0.6rem 1.2rem; display: inline-block; margin-bottom: 0.9rem;">
-                <h1 style="color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 1.75rem; margin: 0; letter-spacing: -0.01em;">
+        <div style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 45%, #2E1065 100%); border-radius: 16px; padding: 2.5rem 2.8rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 2rem; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.4); border: 1px solid #4338CA;">
+            <div style="background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%); border: 1px solid #A78BFA; border-radius: 12px; padding: 0.8rem 1.5rem; display: inline-block; margin-bottom: 1.2rem; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);">
+                <h1 style="color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 1.85rem; margin: 0; letter-spacing: -0.01em;">
                     🧬 Automated Population Pharmacogenomics Analysis Platform
                 </h1>
             </div>
-            <p style="color: #F1F5F9; font-size: 1.05rem; line-height: 1.65; font-weight: 400; margin-bottom: 1.5rem;">
-                <strong>PGx Analytics Pro</strong> is an automated population pharmacogenomics software built for instant quality control, Hardy–Weinberg Equilibrium (HWE) testing, regional demographic stratification, and CPIC metabolizer phenotype translation.
+            <p style="color: #F1F5F9; font-size: 1.1rem; line-height: 1.7; font-weight: 400; max-width: 900px; margin-bottom: 1.8rem;">
+                <strong>PGx Analytics Pro</strong> is a standardized, high-performance pharmacogenomics engine engineered for instant quality control, Hardy–Weinberg Equilibrium (HWE) evaluation, regional demographic stratification, and CPIC metabolizer phenotype translation.
             </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-top: 1.2rem;">
-                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #A7F3D0; font-weight: 800; letter-spacing: 0.05em;">Target Gene & SNPs</div>
-                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">CYP2C19 (*2, *3, *17)</div>
-                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">rs4244285, rs4986893, rs12248560</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem;">
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1rem 1.2rem; border-left: 4px solid #34D399; backdrop-filter: blur(8px);">
+                    <div style="font-size: 0.78rem; text-transform: uppercase; color: #A7F3D0; font-weight: 800; letter-spacing: 0.06em;">Target Gene & SNPs</div>
+                    <div style="font-size: 1.15rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">CYP2C19 (*2, *3, *17)</div>
+                    <div style="font-size: 0.82rem; color: #CBD5E1; margin-top: 0.2rem;">rs4244285, rs4986893, rs12248560</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #93C5FD; font-weight: 800; letter-spacing: 0.05em;">Statistical & HWE Engine</div>
-                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
-                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">Threshold χ² ≥ 3.841 (p ≤ 0.05)</div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1rem 1.2rem; border-left: 4px solid #60A5FA; backdrop-filter: blur(8px);">
+                    <div style="font-size: 0.78rem; text-transform: uppercase; color: #93C5FD; font-weight: 800; letter-spacing: 0.06em;">Statistical & HWE Engine</div>
+                    <div style="font-size: 1.15rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
+                    <div style="font-size: 0.82rem; color: #CBD5E1; margin-top: 0.2rem;">Threshold χ² ≥ 3.841 (p ≤ 0.05)</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #FDE68A; font-weight: 800; letter-spacing: 0.05em;">Demographic Matrix</div>
-                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Regional Macro-Zones</div>
-                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">South, North, East, West, Central</div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1rem 1.2rem; border-left: 4px solid #FBBF24; backdrop-filter: blur(8px);">
+                    <div style="font-size: 0.78rem; text-transform: uppercase; color: #FDE68A; font-weight: 800; letter-spacing: 0.06em;">Demographic Matrix</div>
+                    <div style="font-size: 1.15rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Regional Macro-Zones</div>
+                    <div style="font-size: 0.82rem; color: #CBD5E1; margin-top: 0.2rem;">South, North, East, West, Central</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.18);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #F472B6; font-weight: 800; letter-spacing: 0.05em;">CPIC Phenotype Calling</div>
-                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Metabolizer Classes</div>
-                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">UM, RM, NM, IM, PM Phenotypes</div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1rem 1.2rem; border-left: 4px solid #F472B6; backdrop-filter: blur(8px);">
+                    <div style="font-size: 0.78rem; text-transform: uppercase; color: #F472B6; font-weight: 800; letter-spacing: 0.06em;">CPIC Clinical Calling</div>
+                    <div style="font-size: 1.15rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Metabolizer Classes</div>
+                    <div style="font-size: 0.82rem; color: #CBD5E1; margin-top: 0.2rem;">UM, RM, NM, IM, PM Phenotypes</div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("### 🛠️ What This Platform Currently Does")
+        st.markdown("<h3 style='color:#1E293B; font-weight:700; margin-bottom:1.2rem;'>⚡ Platform Functionality Overview</h3>", unsafe_allow_html=True)
+
+        # 6 Sleek Visual Cards in 2-Column Grid
         st.markdown("""
-        - 📁 **Dataset Upload & Smart Mapping**: Supports Excel (`.xlsx`, `.xls`) and CSV files with flexible column mapping for Sample IDs, location, and genotype columns.
-        - 🔍 **Automated Quality Control (QC)**: Instant screening to count total samples, identify valid genotype calls, detect missing entries, and filter duplicate Sample IDs within uploaded files.
-        - 🧬 **Target SNP Genotyping**: Evaluates key `CYP2C19` pharmacogenetic variants (`*2` rs4244285, `*3` rs4986893, and `*17` rs12248560).
-        - ⚠️ **Hardy–Weinberg Equilibrium (HWE) Checks**: Automatically calculates allele frequencies and highlights statistically significant HWE deviations ($\chi^2 \ge 3.841$) in bright red.
-        - 🗺️ **Demographic & Regional Stratification**: Categorizes cohorts into 5 geographic macro-regions (South, North, East, West, Central) and calculates regional allele distribution matrices.
-        - 💊 **CPIC Metabolizer Phenotype Calling**: Automatically translates star-allele diplotypes into 5 standard clinical phenotypes: **Ultrarapid (UM)**, **Rapid (RM)**, **Normal (NM)**, **Intermediate (IM)**, and **Poor (PM)**.
-        - 🔒 **100% Browser-Side Privacy**: All data processing and database indexing (`pgx_analysis.db`) run locally on your device with zero cloud uploads.
-        - 📊 **One-Click Export**: Generates publication-ready multi-tab Excel (`.xlsx`), summary CSV (`.csv`), and PDF (`.pdf`) reports.
-        """)
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.2rem; margin-bottom: 2rem;">
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #4F46E5;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.6rem; background: #EEF2FF; padding: 0.4rem; border-radius: 8px;">📁</span>
+                    <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">Dataset Import & Smart Column Mapping</h4>
+                </div>
+                <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
+                    Accepts raw Excel (<code>.xlsx</code>, <code>.xls</code>) and CSV files with intelligent auto-detection of Sample IDs, location, and genotype columns.
+                </p>
+            </div>
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #059669;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.6rem; background: #ECFDF5; padding: 0.4rem; border-radius: 8px;">🛡️</span>
+                    <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">Automated Quality Control & Deduplication</h4>
+                </div>
+                <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
+                    Instantly screens uploaded files to evaluate valid genotype call rates, flag missing genotypes, and detect duplicate Sample IDs within the dataset.
+                </p>
+            </div>
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #7C3AED;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.6rem; background: #F3E8FF; padding: 0.4rem; border-radius: 8px;">🧬</span>
+                    <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">Target CYP2C19 SNP Panel Genotyping</h4>
+                </div>
+                <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
+                    Evaluates key pharmacogenetic star-allele variants: <code>CYP2C19*2</code> (rs4244285), <code>CYP2C19*3</code> (rs4986893), and <code>CYP2C19*17</code> (rs12248560).
+                </p>
+            </div>
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #DC2626;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.6rem; background: #FEE2E2; padding: 0.4rem; border-radius: 8px;">⚠️</span>
+                    <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">Hardy–Weinberg Equilibrium Red Warning Alerts</h4>
+                </div>
+                <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
+                    Calculates observed vs expected genotype counts and automatically highlights statistically significant HWE deviations (<code>χ² ≥ 3.841</code>) in bright red.
+                </p>
+            </div>
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #D97706;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.6rem; background: #FEF3C7; padding: 0.4rem; border-radius: 8px;">🗺️</span>
+                    <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">Demographic & Regional Stratification</h4>
+                </div>
+                <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
+                    Groups state sample locations into 5 Indian macro-zones (South, North, East, West, Central) to generate regional allele distribution matrices.
+                </p>
+            </div>
+            <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #0284C7;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.6rem; background: #E0F2FE; padding: 0.4rem; border-radius: 8px;">💊</span>
+                    <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">CPIC Metabolizer Phenotype Translation</h4>
+                </div>
+                <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
+                    Translates star-allele diplotypes into 5 standardized clinical phenotype classes: Ultrarapid (UM), Rapid (RM), Normal (NM), Intermediate (IM), and Poor (PM).
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Bottom Privacy & Export Highlights
+        st.info("🔒 **100% Local Browser Privacy**: All dataset parsing, statistical math, and SQLite indexing (`pgx_analysis.db`) run locally on your device with zero cloud data transmission.")
+        st.success("📊 **Multi-Format Publication Export**: One-click download of ready-to-present multi-tab Excel (`.xlsx`), raw summary CSV (`.csv`), and formatted PDF (`.pdf`) reports.")
 
         st.markdown("<br>", unsafe_allow_html=True)
 
