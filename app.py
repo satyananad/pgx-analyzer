@@ -984,38 +984,99 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
     main_tab_home, main_tab_about = st.tabs(["🏠 Home Workspace", "ℹ️ About Platform"])
 
     with main_tab_about:
+        # High-contrast, crystal-clear Dark Purple/Bluish banner header
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #1E1B4B 0%, #2E1065 50%, #1E3A8A 100%); border-radius: 12px; padding: 2rem 2.2rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(30, 27, 75, 0.25); border: 1px solid #4C1D95;">
-            <h2 style="color: #F8FAFC; font-family: Georgia, serif; font-weight: 700; margin-top: 0; margin-bottom: 0.6rem; font-size: 1.65rem; letter-spacing: -0.01em;">
-                🧬 About PGx Analytics Pro Platform
-            </h2>
-            <p style="color: #E2E8F0; font-size: 0.95rem; line-height: 1.65; margin-bottom: 1.2rem;">
-                PGx Analytics Pro is an automated population pharmacogenomics analysis platform designed for standardized, end-to-end evaluation of pharmacogenetic variants across diverse geographic and demographic cohorts. The platform replaces manual spreadsheet calculations with instant quality control, Hardy–Weinberg Equilibrium (HWE) testing, regional demographic stratification, and CPIC metabolizer phenotype translation.
+        <div style="background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #1E3A8A 100%); border-radius: 14px; padding: 2.2rem 2.5rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 2rem; box-shadow: 0 10px 25px rgba(30, 27, 75, 0.35); border: 1px solid #4338CA;">
+            <h1 style="color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 1.95rem; margin-top: 0; margin-bottom: 0.8rem; letter-spacing: -0.02em;">
+                🧬 Automated Population Pharmacogenomics Analysis Platform
+            </h1>
+            <p style="color: #F1F5F9; font-size: 1.05rem; line-height: 1.7; font-weight: 400; margin-bottom: 1.5rem;">
+                <strong>PGx Analytics Pro</strong> is a standardized, automated population pharmacogenomics analysis software designed for end-to-end evaluation of star-alleles, genotype frequencies, Hardy–Weinberg Equilibrium (HWE), and CPIC metabolizer phenotypes across diverse geographic cohorts.
             </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.2rem;">
-                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #A7F3D0; font-weight: 700; letter-spacing: 0.05em;">Target Gene & SNPs</div>
-                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">CYP2C19 (*2, *3, *17)</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">rs4244285, rs4986893, rs12248560</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-top: 1.2rem;">
+                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #A7F3D0; font-weight: 800; letter-spacing: 0.05em;">Target Gene & SNPs</div>
+                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">CYP2C19 (*2, *3, *17)</div>
+                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">rs4244285, rs4986893, rs12248560</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #93C5FD; font-weight: 700; letter-spacing: 0.05em;">Statistical & HWE Engine</div>
-                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">Critical threshold χ² ≥ 3.841</div>
+                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #93C5FD; font-weight: 800; letter-spacing: 0.05em;">Statistical & HWE Engine</div>
+                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
+                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">Threshold χ² ≥ 3.841 (p ≤ 0.05)</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #FDE68A; font-weight: 700; letter-spacing: 0.05em;">Demographic Stratification</div>
-                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">5 Geographic Regions</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">South, North, East, West, Central</div>
+                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #FDE68A; font-weight: 800; letter-spacing: 0.05em;">Demographic Matrix</div>
+                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Regional Macro-Zones</div>
+                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">South, North, East, West, Central</div>
                 </div>
-                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #F472B6; font-weight: 700; letter-spacing: 0.05em;">CPIC Phenotype Calling</div>
-                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">5 Metabolizer Classes</div>
-                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">UM, RM, NM, IM, PM</div>
+                <div style="background: rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem 1.2rem; border: 1px solid rgba(255, 255, 255, 0.2);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #F472B6; font-weight: 800; letter-spacing: 0.05em;">CPIC Clinical Calling</div>
+                    <div style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">5 Metabolizer Classes</div>
+                    <div style="font-size: 0.82rem; color: #E2E8F0; margin-top: 0.2rem;">UM, RM, NM, IM, PM Phenotypes</div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        st.markdown("### 📌 Platform Overview & Key Capabilities")
+        c_ab1, c_ab2 = st.columns(2)
+        with c_ab1:
+            st.info("""
+            **🎯 Purpose & Clinical Rationale**
+            Manual spreadsheet calculations in population genetics are prone to human formula errors, inconsistent Hardy–Weinberg Equilibrium (HWE) cutoff flags, and unstandardized CPIC phenotype assignments. 
+
+            This platform automates the end-to-end analytical pipeline—from raw Excel upload to automated statistical QC, Hardy–Weinberg calculation, regional demographic stratification, and export-ready publication reports.
+            """)
+        with c_ab2:
+            st.success("""
+            **🔒 Local Privacy & Embedded Database Architecture**
+            - **Local Execution**: All file parsing, genotype quality control, and statistical math execute locally within browser memory. No data is sent to external servers.
+            - **SQLite Storage**: Uploaded records are indexed in an embedded local SQLite database (`pgx_analysis.db`) with transactional batch history.
+            - **Multi-Format Export**: Generates comprehensive multi-tab Excel (`.xlsx`), summary CSV (`.csv`), and print-ready PDF (`.pdf`) reports.
+            """)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 🧬 Target Pharmacogene & Variant Specifications")
+        st.markdown("""
+        | Target Gene | Star Allele | dbSNP ID | Nucleotide Variant | Functional Impact | Clinical Phenotype Effect |
+        | :--- | :--- | :--- | :--- | :--- | :--- |
+        | **CYP2C19** | **\*1** | Reference | Wild-type | Normal Enzyme Function | Standard Drug Metabolism (Normal) |
+        | **CYP2C19** | **\*2** | `rs4244285` | c.681G>A | Aberrant Splicing Defect | No Function (Loss-of-Function) |
+        | **CYP2C19** | **\*3** | `rs4986893` | c.636G>A | Premature Stop Codon (W212X) | No Function (Loss-of-Function) |
+        | **CYP2C19** | **\*17** | `rs12248560` | c.-806C>T | Promoter Hyper-transcription | Increased Function (Gain-of-Function) |
+        """)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 🧮 Statistical Methodology & CPIC Guidelines")
+
+        with st.expander("📐 1. Quality Control & Duplicate Filtering Engine", expanded=True):
+            st.markdown("""
+            - **Sample QC Evaluation**: Evaluates raw dataset rows for duplicate Sample IDs within the uploaded file.
+            - **Call Rate Calculation**: Tracks valid genotype calls vs missing calls (`NaN`, `Missing`, or uncalled genotypes).
+            - **Canonical Allele Validation**: Verifies allele calls against allowed canonical representations (`CYP2C19*2`: GG/GA/AA; `CYP2C19*3`: GG; `CYP2C19*17`: CC/CT/TT).
+            """)
+
+        with st.expander("📊 2. Hardy–Weinberg Equilibrium (HWE) & Haldane Correction", expanded=True):
+            st.markdown(r"""
+            - **Allele Frequencies**: Calculated as $p = f(\text{REF})$ and $q = f(\text{ALT}) = 1 - p$.
+            - **Expected Genotype Counts**: 
+              $$E(AA) = N \cdot p^2, \quad E(AB) = 2 N \cdot p \cdot q, \quad E(BB) = N \cdot q^2$$
+            - **Pearson Chi-Square ($\chi^2$) Test**:
+              $$\chi^2 = \sum \frac{(O - E)^2}{E}$$
+            - **Threshold Warning**: Whenever $\chi^2 \ge 3.841$ ($p \le 0.05$ with 1 degree of freedom), the cell is automatically highlighted with a **bright warning indicator (⚠️ Chi² > 3.841)**.
+            - **Haldane Correction**: Applied to prevent division by zero in zero-count genotype cells.
+            """)
+
+        with st.expander("💊 3. CPIC Diplotype to Metabolizer Phenotype Assignment Rules", expanded=True):
+            st.markdown("""
+            - **Ultrarapid Metabolizer (UM)**: `*17/*17` (Increased enzymatic activity)
+            - **Rapid Metabolizer (RM)**: `*1/*17` (Slightly increased activity)
+            - **Normal Metabolizer (NM)**: `*1/*1` (Normal wild-type activity)
+            - **Intermediate Metabolizer (IM)**: `*1/*2`, `*1/*3`, `*2/*17`, `*3/*17` (Decreased activity)
+            - **Poor Metabolizer (PM)**: `*2/*2`, `*2/*3`, `*3/*3` (Complete loss of enzyme activity)
+            """)
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
     with main_tab_home:
         step_cols = st.columns(3)
@@ -1037,271 +1098,271 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-    # -------------------------------------------------------------------------
-    # STEP 1: UPLOAD (Matching Image 1)
-    # -------------------------------------------------------------------------
-    if st.session_state['workflow_step'] == '1 · Upload':
-        st.markdown("## Upload genotype dataset")
-        st.caption('Excel (.xlsx/.csv) with one row per sample: Sample ID, Gender, DOB, region/location, and genotype columns for each SNP (e.g. "GA", "G/A", "AA").')
+        # -------------------------------------------------------------------------
+        # STEP 1: UPLOAD (Matching Image 1)
+        # -------------------------------------------------------------------------
+        if st.session_state['workflow_step'] == '1 · Upload':
+            st.markdown("## Upload genotype dataset")
+            st.caption('Excel (.xlsx/.csv) with one row per sample: Sample ID, Gender, DOB, region/location, and genotype columns for each SNP (e.g. "GA", "G/A", "AA").')
 
-        st.markdown("""
-        <div class="upload-container-box">
-            <div class="upload-icon-style">⇧</div>
-            <div class="upload-title-style">Click to choose a file, or drag it here</div>
-            <div class="upload-sub-style">.xlsx, .xls, or .csv — first row must be headers</div>
-        </div>
-        """, unsafe_allow_html=True)
+            st.markdown("""
+            <div class="upload-container-box">
+                <div class="upload-icon-style">⇧</div>
+                <div class="upload-title-style">Click to choose a file, or drag it here</div>
+                <div class="upload-sub-style">.xlsx, .xls, or .csv — first row must be headers</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        file_upload = st.file_uploader("Select dataset file", type=["xlsx", "xls", "csv"], key="w_step1_uploader", label_visibility="collapsed")
-        if file_upload is not None:
-            uploaded_file_id = f"{file_upload.name}_{file_upload.size}"
-            if st.session_state.get('last_uploaded_file_id') != uploaded_file_id:
-                load_success = False
-                try:
-                    file_bytes = io.BytesIO(file_upload.getvalue())
-                    if file_upload.name.lower().endswith('.csv'):
-                        df_load = pd.read_csv(file_bytes)
-                    else:
-                        df_load = pd.read_excel(file_bytes)
-                    clear_deletion_flag()
-                    st.session_state['last_uploaded_file_id'] = uploaded_file_id
-                    st.session_state['uploaded_df'] = df_load
-                    st.session_state['mapped_cols'] = {}
-                    st.session_state['workflow_step'] = '3 · Results'
-                    load_success = True
-                except Exception as e:
-                    st.error(f"Error loading file: {e}")
-                
-                if load_success:
-                    st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
-                    st.rerun()
-
-        st.markdown("""
-        <div class="privacy-info-banner">
-            No data leaves your browser. Parsing and all statistics run locally.
-        </div>
-        """, unsafe_allow_html=True)
-
-        c_space, c_next = st.columns([0.75, 0.25])
-        with c_next:
-            if st.button("Continue →", type="primary", use_container_width=True, key="btn_step1_cont"):
-                if has_active_data():
-                    st.session_state['workflow_step'] = '3 · Results'
-                else:
-                    st.session_state['workflow_step'] = '2 · Map columns'
-                st.rerun()
-
-        st.divider()
-
-        with st.expander("🛠️ Advanced Workspace Actions & Manual Record Entry", expanded=False):
-            if st.session_state.get('show_delete_confirm', False):
-                st.warning("⚠️ **Warning: Delete Active Dataset?**\nThis will permanently delete the current dataset and reset workspace to 0 samples. This action cannot be undone.")
-                c_del_exp1, c_del_exp2 = st.columns(2)
-                with c_del_exp1:
-                    if st.button("🔴 Permanently Delete Dataset", type="primary", use_container_width=True, key="btn_exp_confirm_del"):
-                        reset_all_data()
-                        st.success("Active dataset permanently deleted.")
-                        st.rerun()
-                with c_del_exp2:
-                    if st.button("❌ Cancel", type="secondary", use_container_width=True, key="btn_exp_cancel_del"):
-                        st.session_state['show_delete_confirm'] = False
-                        st.rerun()
-            else:
-                if st.button("🗑️ Delete Active Dataset", type="secondary", use_container_width=True, key="btn_exp_reset"):
-                    st.session_state['show_delete_confirm'] = True
-                    st.rerun()
-
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            st.markdown("#### ➕ Manual Sample Data Entry Form")
-            st.caption("Insert individual sample records. Validation rules: CYP2C19*2 accepts GG/GA/AA; CYP2C19*3 accepts GG only; CYP2C19*17 accepts CC/CT/TT.")
-            
-            with st.form("manual_sample_form_single", clear_on_submit=True):
-                f_c1, f_c2 = st.columns(2)
-                in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
-                in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
-                
-                f_c3, f_c4 = st.columns(2)
-                in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
-                in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
-                
-                in_native = st.text_input("Native Place (City / District)", value=in_state)
-                in_3gen = st.selectbox("Is their family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
-                
-                st.markdown("##### CYP2C19 Target Genotypes")
-                fg1, fg2, fg3 = st.columns(3)
-                in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid Call)"])
-                in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "Missing", "GA (Invalid Call)", "AA (Invalid Call)"])
-                in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid Call)"])
-                
-                submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
-                
-                if submit_sample:
-                    cyp2_val = in_cyp2.split(' ')[0]
-                    cyp3_val = in_cyp3.split(' ')[0]
-                    cyp17_val = in_cyp17.split(' ')[0]
-
-                    new_row = {
-                        'sample ID': in_sid,
-                        'Gender': in_gender,
-                        'Date of Birth': in_dob,
-                        'Native place ': in_native,
-                        'State': in_state,
-                        'Test requested': 'CYP2C19 Genotyping',
-                        'Is their family lived at Native place for past 3 generations?': in_3gen,
-                        'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else cyp2_val,
-                        'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else cyp3_val,
-                        'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
-                    }
+            file_upload = st.file_uploader("Select dataset file", type=["xlsx", "xls", "csv"], key="w_step1_uploader", label_visibility="collapsed")
+            if file_upload is not None:
+                uploaded_file_id = f"{file_upload.name}_{file_upload.size}"
+                if st.session_state.get('last_uploaded_file_id') != uploaded_file_id:
+                    load_success = False
+                    try:
+                        file_bytes = io.BytesIO(file_upload.getvalue())
+                        if file_upload.name.lower().endswith('.csv'):
+                            df_load = pd.read_csv(file_bytes)
+                        else:
+                            df_load = pd.read_excel(file_bytes)
+                        clear_deletion_flag()
+                        st.session_state['last_uploaded_file_id'] = uploaded_file_id
+                        st.session_state['uploaded_df'] = df_load
+                        st.session_state['mapped_cols'] = {}
+                        st.session_state['workflow_step'] = '3 · Results'
+                        load_success = True
+                    except Exception as e:
+                        st.error(f"Error loading file: {e}")
                     
-                    clear_deletion_flag()
-                    if st.session_state['uploaded_df'] is not None and len(st.session_state['uploaded_df']) > 0:
-                        st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
+                    if load_success:
+                        st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
+                        st.rerun()
+
+            st.markdown("""
+            <div class="privacy-info-banner">
+                No data leaves your browser. Parsing and all statistics run locally.
+            </div>
+            """, unsafe_allow_html=True)
+
+            c_space, c_next = st.columns([0.75, 0.25])
+            with c_next:
+                if st.button("Continue →", type="primary", use_container_width=True, key="btn_step1_cont"):
+                    if has_active_data():
+                        st.session_state['workflow_step'] = '3 · Results'
                     else:
-                        st.session_state['uploaded_df'] = pd.DataFrame([new_row])
-                        
-                    st.session_state['workflow_step'] = '3 · Results'
-                    st.success(f"Sample {in_sid} added successfully!")
+                        st.session_state['workflow_step'] = '2 · Map columns'
                     st.rerun()
 
-        st.markdown("""
-        <div class="footer-disclaimer-text">
-            PGx Pop MVP · CYP2C19 calling uses a simplified unphased-genotype heuristic — see notes in the CYP2C19 tab · Not for clinical use without independent validation.
-        </div>
-        """, unsafe_allow_html=True)
+            st.divider()
 
-    # -------------------------------------------------------------------------
-    # STEP 2: MAP COLUMNS (Matching Image 2)
-    # -------------------------------------------------------------------------
-    elif st.session_state['workflow_step'] == '2 · Map columns':
-        st.markdown("## Map your columns")
-        num_cols = len(df_raw.columns) if df_raw is not None else 0
-        num_rows = len(df_raw) if df_raw is not None else 0
-        st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
+            with st.expander("🛠️ Advanced Workspace Actions & Manual Record Entry", expanded=False):
+                if st.session_state.get('show_delete_confirm', False):
+                    st.warning("⚠️ **Warning: Delete Active Dataset?**\nThis will permanently delete the current dataset and reset workspace to 0 samples. This action cannot be undone.")
+                    c_del_exp1, c_del_exp2 = st.columns(2)
+                    with c_del_exp1:
+                        if st.button("🔴 Permanently Delete Dataset", type="primary", use_container_width=True, key="btn_exp_confirm_del"):
+                            reset_all_data()
+                            st.success("Active dataset permanently deleted.")
+                            st.rerun()
+                    with c_del_exp2:
+                        if st.button("❌ Cancel", type="secondary", use_container_width=True, key="btn_exp_cancel_del"):
+                            st.session_state['show_delete_confirm'] = False
+                            st.rerun()
+                else:
+                    if st.button("🗑️ Delete Active Dataset", type="secondary", use_container_width=True, key="btn_exp_reset"):
+                        st.session_state['show_delete_confirm'] = True
+                        st.rerun()
 
-        if df_raw is not None and len(df_raw.columns) > 0:
-            all_cols = list(df_raw.columns)
-            def find_default(patterns, cols):
-                for pattern in patterns:
-                    for c in cols:
-                        if pattern.lower() in str(c).lower():
-                            return c
-                return cols[0] if cols else ""
+                st.markdown("<br>", unsafe_allow_html=True)
 
-            c_m1, c_m2, c_m3 = st.columns(3)
-            sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
-            gender_def = find_default(['gender', 'sex'], all_cols)
-            region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
+                st.markdown("#### ➕ Manual Sample Data Entry Form")
+                st.caption("Insert individual sample records. Validation rules: CYP2C19*2 accepts GG/GA/AA; CYP2C19*3 accepts GG only; CYP2C19*17 accepts CC/CT/TT.")
+                
+                with st.form("manual_sample_form_single", clear_on_submit=True):
+                    f_c1, f_c2 = st.columns(2)
+                    in_sid = f_c1.text_input("Sample ID *", value=f"PATIENT_{len(df_raw)+1 if df_raw is not None else 1:04d}")
+                    in_gender = f_c2.selectbox("Gender *", ["Male", "Female", "Unknown"])
+                    
+                    f_c3, f_c4 = st.columns(2)
+                    in_dob = f_c3.text_input("Date of Birth (YYYY-MM-DD)", value="1990-01-01")
+                    in_state = f_c4.selectbox("State / Region *", list(STATE_TO_REGION.keys()))
+                    
+                    in_native = st.text_input("Native Place (City / District)", value=in_state)
+                    in_3gen = st.selectbox("Is their family lived at Native place for past 3 generations?", ["Yes", "No", "Unknown"])
+                    
+                    st.markdown("##### CYP2C19 Target Genotypes")
+                    fg1, fg2, fg3 = st.columns(3)
+                    in_cyp2 = fg1.selectbox("CYP2C19*2 (rs4244285) *", ["GA", "AA", "GG", "Missing", "CC (Invalid Call)"])
+                    in_cyp3 = fg2.selectbox("CYP2C19*3 (rs4986893) *", ["GG", "Missing", "GA (Invalid Call)", "AA (Invalid Call)"])
+                    in_cyp17 = fg3.selectbox("CYP2C19*17 (rs12248560) *", ["CC", "CT", "TT", "Missing", "GG (Invalid Call)"])
+                    
+                    submit_sample = st.form_submit_button("➕ Add Sample & Recalculate Statistics", type="primary", use_container_width=True)
+                    
+                    if submit_sample:
+                        cyp2_val = in_cyp2.split(' ')[0]
+                        cyp3_val = in_cyp3.split(' ')[0]
+                        cyp17_val = in_cyp17.split(' ')[0]
 
-            sel_sid = c_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
-            sel_gen = c_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
-            sel_reg = c_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
+                        new_row = {
+                            'sample ID': in_sid,
+                            'Gender': in_gender,
+                            'Date of Birth': in_dob,
+                            'Native place ': in_native,
+                            'State': in_state,
+                            'Test requested': 'CYP2C19 Genotyping',
+                            'Is their family lived at Native place for past 3 generations?': in_3gen,
+                            'CYP2C19*2 (rs4244285)': np.nan if "Missing" in in_cyp2 else cyp2_val,
+                            'CYP2C19*3 (rs4986893)': np.nan if "Missing" in in_cyp3 else cyp3_val,
+                            'CYP2C19*17 ( rs12248560)': np.nan if "Missing" in in_cyp17 else cyp17_val
+                        }
+                        
+                        clear_deletion_flag()
+                        if st.session_state['uploaded_df'] is not None and len(st.session_state['uploaded_df']) > 0:
+                            st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
+                        else:
+                            st.session_state['uploaded_df'] = pd.DataFrame([new_row])
+                            
+                        st.session_state['workflow_step'] = '3 · Results'
+                        st.success(f"Sample {in_sid} added successfully!")
+                        st.rerun()
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### CYP2C19 SNP columns")
-            st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
-
-            # Box 1: rs4244285 (*2)
             st.markdown("""
-            <div class="clean-card-box">
-                <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
+            <div class="footer-disclaimer-text">
+                PGx Pop MVP · CYP2C19 calling uses a simplified unphased-genotype heuristic — see notes in the CYP2C19 tab · Not for clinical use without independent validation.
             </div>
             """, unsafe_allow_html=True)
-            c1_1, c1_2, c1_3 = st.columns(3)
-            cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
-            sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="w_map_cyp2")
-            c1_2.text_input("Reference allele (*2)", value="G", key="w_map_ref2")
-            c1_3.text_input("Variant allele (*2)", value="A", key="w_map_var2")
 
-            # Box 2: rs4986893 (*3)
+        # -------------------------------------------------------------------------
+        # STEP 2: MAP COLUMNS (Matching Image 2)
+        # -------------------------------------------------------------------------
+        elif st.session_state['workflow_step'] == '2 · Map columns':
+            st.markdown("## Map your columns")
+            num_cols = len(df_raw.columns) if df_raw is not None else 0
+            num_rows = len(df_raw) if df_raw is not None else 0
+            st.caption(f"Tell the analyzer which columns hold which field. Detected {num_cols} columns, {num_rows:,} rows.")
+
+            if df_raw is not None and len(df_raw.columns) > 0:
+                all_cols = list(df_raw.columns)
+                def find_default(patterns, cols):
+                    for pattern in patterns:
+                        for c in cols:
+                            if pattern.lower() in str(c).lower():
+                                return c
+                    return cols[0] if cols else ""
+
+                c_m1, c_m2, c_m3 = st.columns(3)
+                sample_id_def = find_default(['sample id', 'sample_id', 'id'], all_cols)
+                gender_def = find_default(['gender', 'sex'], all_cols)
+                region_def = find_default(['native place', 'native', 'state', 'region'], all_cols)
+
+                sel_sid = c_m1.selectbox("Sample ID column *", all_cols, index=all_cols.index(sample_id_def) if sample_id_def in all_cols else 0)
+                sel_gen = c_m2.selectbox("Gender column (optional)", ["(None)"] + all_cols, index=all_cols.index(gender_def) + 1 if gender_def in all_cols else 0)
+                sel_reg = c_m3.selectbox("Region / location column (optional)", ["(None)"] + all_cols, index=all_cols.index(region_def) + 1 if region_def in all_cols else 0)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("### CYP2C19 SNP columns")
+                st.caption("Map up to three SNPs. For star-allele/diplotype/phenotype calling, map rs4244285 (*2), rs4986893 (*3) and rs12248560 (*17). Any SNP left as '- none -' is skipped (genotype/allele/HWE still run on whichever SNPs you do map).")
+
+                # Box 1: rs4244285 (*2)
+                st.markdown("""
+                <div class="clean-card-box">
+                    <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs4244285 (CYP2C19*2, c.681G>A)</h5>
+                </div>
+                """, unsafe_allow_html=True)
+                c1_1, c1_2, c1_3 = st.columns(3)
+                cyp2_def = find_default(['cyp2c19*2', 'rs4244285'], all_cols)
+                sel_cyp2 = c1_1.selectbox("Genotype column (*2)", all_cols, index=all_cols.index(cyp2_def) if cyp2_def in all_cols else 0, key="w_map_cyp2")
+                c1_2.text_input("Reference allele (*2)", value="G", key="w_map_ref2")
+                c1_3.text_input("Variant allele (*2)", value="A", key="w_map_var2")
+
+                # Box 2: rs4986893 (*3)
+                st.markdown("""
+                <div class="clean-card-box">
+                    <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
+                </div>
+                """, unsafe_allow_html=True)
+                c2_1, c2_2, c2_3 = st.columns(3)
+                cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
+                sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="w_map_cyp3")
+                c2_2.text_input("Reference allele (*3)", value="G", key="w_map_ref3")
+                c2_3.text_input("Variant allele (*3)", value="A", key="w_map_var3")
+
+                # Box 3: rs12248560 (*17)
+                st.markdown("""
+                <div class="clean-card-box">
+                    <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
+                </div>
+                """, unsafe_allow_html=True)
+                c3_1, c3_2, c3_3 = st.columns(3)
+                cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
+                sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="w_map_cyp17")
+                c3_2.text_input("Reference allele (*17)", value="C", key="w_map_ref17")
+                c3_3.text_input("Variant allele (*17)", value="T", key="w_map_var17")
+
+                st.session_state['mapped_cols'] = {
+                    sel_sid: 'Sample_ID',
+                    sel_gen: 'Gender',
+                    sel_reg: 'Native_Place',
+                    sel_cyp2: 'CYP2C19*2',
+                    sel_cyp3: 'CYP2C19*3',
+                    sel_cyp17: 'CYP2C19*17'
+                }
+
+            c_b1, c_b2, c_b3 = st.columns([0.25, 0.5, 0.25])
+            with c_b1:
+                if st.button("← Back to Upload", use_container_width=True, key="btn_map_back"):
+                    st.session_state['workflow_step'] = '1 · Upload'
+                    st.rerun()
+            with c_b3:
+                if st.button("Continue to Results →", type="primary", use_container_width=True, key="btn_map_cont"):
+                    st.session_state['workflow_step'] = '3 · Results'
+                    st.rerun()
+
+        # -------------------------------------------------------------------------
+        # STEP 3: RESULTS (Matching Images 3, 4, 5)
+        # -------------------------------------------------------------------------
+        elif st.session_state['workflow_step'] == '3 · Results':
+            st.markdown("## Overview")
+            render_unified_results(full_results, qc_report)
+
+            st.divider()
+            st.markdown("### Export")
+            st.caption("Download the full result set for the current group selection.")
+
+            e1, e2, e3, e_remap = st.columns([0.25, 0.25, 0.25, 0.25])
+
+            rep_gen = ReportGenerator(full_results, qc_report) if has_active_data() else None
+
+            with e1:
+                if rep_gen:
+                    excel_bytes = rep_gen.generate_excel()
+                    st.download_button("⬇ Excel (.xlsx, all sheets)", data=excel_bytes, file_name="PGx_Population_Report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, key="btn_exp_excel")
+                else:
+                    st.button("⬇ Excel (.xlsx, all sheets)", disabled=True, use_container_width=True)
+
+            with e2:
+                if rep_gen:
+                    csv_bytes = rep_gen.generate_csv()
+                    st.download_button("⬇ CSV (summary)", data=csv_bytes, file_name="PGx_Population_Summary.csv", mime="text/csv", use_container_width=True, key="btn_exp_csv")
+                else:
+                    st.button("⬇ CSV (summary)", disabled=True, use_container_width=True)
+
+            with e3:
+                if rep_gen:
+                    pdf_bytes = rep_gen.generate_pdf()
+                    st.download_button("⬇ PDF (print view)", data=pdf_bytes, file_name="PGx_Population_Report.pdf", mime="application/pdf", use_container_width=True, key="btn_exp_pdf")
+                else:
+                    st.button("⬇ PDF (print view)", disabled=True, use_container_width=True)
+
+            with e_remap:
+                if st.button("← Re-map columns", use_container_width=True, key="btn_res_remap"):
+                    st.session_state['workflow_step'] = '2 · Map columns'
+                    st.rerun()
+
             st.markdown("""
-            <div class="clean-card-box">
-                <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs4986893 (CYP2C19*3, c.636G>A)</h5>
+            <div class="footer-disclaimer-text">
+                PGx Pop MVP · CYP2C19 calling uses a simplified unphased-genotype heuristic — see notes in the CYP2C19 tab · Not for clinical use without independent validation.
             </div>
             """, unsafe_allow_html=True)
-            c2_1, c2_2, c2_3 = st.columns(3)
-            cyp3_def = find_default(['cyp2c19*3', 'rs4986893'], all_cols)
-            sel_cyp3 = c2_1.selectbox("Genotype column (*3)", all_cols, index=all_cols.index(cyp3_def) if cyp3_def in all_cols else 0, key="w_map_cyp3")
-            c2_2.text_input("Reference allele (*3)", value="G", key="w_map_ref3")
-            c2_3.text_input("Variant allele (*3)", value="A", key="w_map_var3")
-
-            # Box 3: rs12248560 (*17)
-            st.markdown("""
-            <div class="clean-card-box">
-                <h5 style="margin-top:0; color:#0F172A; font-family:-apple-system, sans-serif; font-weight:700;">rs12248560 (CYP2C19*17, c.-806C>T)</h5>
-            </div>
-            """, unsafe_allow_html=True)
-            c3_1, c3_2, c3_3 = st.columns(3)
-            cyp17_def = find_default(['cyp2c19*17', 'rs12248560'], all_cols)
-            sel_cyp17 = c3_1.selectbox("Genotype column (*17)", all_cols, index=all_cols.index(cyp17_def) if cyp17_def in all_cols else 0, key="w_map_cyp17")
-            c3_2.text_input("Reference allele (*17)", value="C", key="w_map_ref17")
-            c3_3.text_input("Variant allele (*17)", value="T", key="w_map_var17")
-
-            st.session_state['mapped_cols'] = {
-                sel_sid: 'Sample_ID',
-                sel_gen: 'Gender',
-                sel_reg: 'Native_Place',
-                sel_cyp2: 'CYP2C19*2',
-                sel_cyp3: 'CYP2C19*3',
-                sel_cyp17: 'CYP2C19*17'
-            }
-
-        c_b1, c_b2, c_b3 = st.columns([0.25, 0.5, 0.25])
-        with c_b1:
-            if st.button("← Back to Upload", use_container_width=True, key="btn_map_back"):
-                st.session_state['workflow_step'] = '1 · Upload'
-                st.rerun()
-        with c_b3:
-            if st.button("Continue to Results →", type="primary", use_container_width=True, key="btn_map_cont"):
-                st.session_state['workflow_step'] = '3 · Results'
-                st.rerun()
-
-    # -------------------------------------------------------------------------
-    # STEP 3: RESULTS (Matching Images 3, 4, 5)
-    # -------------------------------------------------------------------------
-    elif st.session_state['workflow_step'] == '3 · Results':
-        st.markdown("## Overview")
-        render_unified_results(full_results, qc_report)
-
-        st.divider()
-        st.markdown("### Export")
-        st.caption("Download the full result set for the current group selection.")
-
-        e1, e2, e3, e_remap = st.columns([0.25, 0.25, 0.25, 0.25])
-
-        rep_gen = ReportGenerator(full_results, qc_report) if has_active_data() else None
-
-        with e1:
-            if rep_gen:
-                excel_bytes = rep_gen.generate_excel()
-                st.download_button("⬇ Excel (.xlsx, all sheets)", data=excel_bytes, file_name="PGx_Population_Report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, key="btn_exp_excel")
-            else:
-                st.button("⬇ Excel (.xlsx, all sheets)", disabled=True, use_container_width=True)
-
-        with e2:
-            if rep_gen:
-                csv_bytes = rep_gen.generate_csv()
-                st.download_button("⬇ CSV (summary)", data=csv_bytes, file_name="PGx_Population_Summary.csv", mime="text/csv", use_container_width=True, key="btn_exp_csv")
-            else:
-                st.button("⬇ CSV (summary)", disabled=True, use_container_width=True)
-
-        with e3:
-            if rep_gen:
-                pdf_bytes = rep_gen.generate_pdf()
-                st.download_button("⬇ PDF (print view)", data=pdf_bytes, file_name="PGx_Population_Report.pdf", mime="application/pdf", use_container_width=True, key="btn_exp_pdf")
-            else:
-                st.button("⬇ PDF (print view)", disabled=True, use_container_width=True)
-
-        with e_remap:
-            if st.button("← Re-map columns", use_container_width=True, key="btn_res_remap"):
-                st.session_state['workflow_step'] = '2 · Map columns'
-                st.rerun()
-
-        st.markdown("""
-        <div class="footer-disclaimer-text">
-            PGx Pop MVP · CYP2C19 calling uses a simplified unphased-genotype heuristic — see notes in the CYP2C19 tab · Not for clinical use without independent validation.
-        </div>
-        """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # MAIN WORKFLOW EXECUTION
