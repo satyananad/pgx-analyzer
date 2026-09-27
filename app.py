@@ -585,21 +585,24 @@ def render_unified_results(full_results: dict, qc_report: dict):
             
         c_hwe_tbl, c_hwe_fig = st.columns([1.1, 0.9])
         with c_hwe_tbl:
-            hwe_table_disp = []
-            for r in hwe_table_rows:
-                raw_c2 = r['_raw_chi2']
-                c2_str = f"⚠️ {raw_c2:.4f} (Chi² ≥ 3.841)" if raw_c2 >= 3.841 else f"{raw_c2:.4f}"
-                hwe_table_disp.append({
-                    'SNP Variant': r['SNP Variant'],
-                    'Valid Samples (N)': r['Valid Samples (N)'],
-                    'Observed Genotypes': r['Observed Genotypes'],
-                    'Expected Genotypes': r['Expected Genotypes'],
-                    'Chi-Square (χ²)': c2_str,
-                    'df': r['Degrees of Freedom'],
-                    'P-Value': r['P-Value'],
-                    'Exact P-Val': r['Exact Test P-Value']
-                })
-            st.table(pd.DataFrame(hwe_table_disp))
+            hwe_df = pd.DataFrame([{
+                'SNP Variant': r['SNP Variant'],
+                'Valid Samples (N)': r['Valid Samples (N)'],
+                'Observed Genotypes': r['Observed Genotypes'],
+                'Expected Genotypes': r['Expected Genotypes'],
+                'Chi-Square (χ²)': f"⚠️ {r['_raw_chi2']:.4f} (Chi² ≥ 3.841)" if r['_raw_chi2'] >= 3.841 else f"{r['_raw_chi2']:.4f}",
+                'df': r['Degrees of Freedom'],
+                'P-Value': r['P-Value'],
+                'Exact P-Val': r['Exact Test P-Value']
+            } for r in hwe_table_rows])
+
+            def style_hwe_chi2(val):
+                if '⚠️' in str(val) or 'Chi²' in str(val):
+                    return 'background-color: #FEE2E2; color: #DC2626; font-weight: bold; border-radius: 4px;'
+                return 'color: #166534; font-weight: 600;'
+
+            styled_hwe = hwe_df.style.map(style_hwe_chi2, subset=['Chi-Square (χ²)'])
+            st.dataframe(styled_hwe, use_container_width=True, hide_index=True)
 
         with c_hwe_fig:
             chi2_chart_df = pd.DataFrame([
