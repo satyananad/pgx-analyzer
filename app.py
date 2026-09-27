@@ -583,45 +583,23 @@ def render_unified_results(full_results: dict, qc_report: dict):
                 'Exact Test P-Value': f"{hw.get('exact_p_value', 1.0):.4f}"
             })
             
-        c_hwe_tbl, c_hwe_fig = st.columns([1.2, 0.8])
+        c_hwe_tbl, c_hwe_fig = st.columns([1.1, 0.9])
         with c_hwe_tbl:
-            hwe_html = """
-            <table style="width:100%; border-collapse:collapse; font-family:-apple-system, sans-serif; font-size:0.85rem; margin-bottom:1rem;">
-                <thead>
-                    <tr style="border-top:1.5px solid #0F172A; border-bottom:1.5px solid #0F172A; text-align:left; color:#0F172A; font-size:0.75rem; font-weight:700;">
-                        <th style="padding:8px 6px;">SNP Variant</th>
-                        <th style="padding:8px 6px;">Valid Samples (N)</th>
-                        <th style="padding:8px 6px;">Observed Genotypes</th>
-                        <th style="padding:8px 6px;">Expected Genotypes</th>
-                        <th style="padding:8px 6px;">Chi-Square (χ²)</th>
-                        <th style="padding:8px 6px;">df</th>
-                        <th style="padding:8px 6px;">P-Value</th>
-                        <th style="padding:8px 6px;">Exact P-Val</th>
-                    </tr>
-                </thead>
-                <tbody>
-            """
+            hwe_table_disp = []
             for r in hwe_table_rows:
                 raw_c2 = r['_raw_chi2']
-                if raw_c2 >= 3.841:
-                    c2_badge = f'''<span style="background-color:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5; padding:3px 8px; border-radius:12px; font-weight:700; font-size:0.8rem; display:inline-block;">⚠️ {raw_c2:.4f} (Chi² ≥ 3.841)</span>'''
-                else:
-                    c2_badge = f'''<span style="color:#166534; font-weight:600;">{raw_c2:.4f}</span>'''
-
-                hwe_html += f"""
-                    <tr style="border-bottom:1px solid #E2E8F0;">
-                        <td style="padding:8px 6px; font-weight:700; color:#0F172A;">{r['SNP Variant']}</td>
-                        <td style="padding:8px 6px;">{r['Valid Samples (N)']:,}</td>
-                        <td style="padding:8px 6px;">{r['Observed Genotypes']}</td>
-                        <td style="padding:8px 6px;">{r['Expected Genotypes']}</td>
-                        <td style="padding:8px 6px;">{c2_badge}</td>
-                        <td style="padding:8px 6px;">{r['Degrees of Freedom']}</td>
-                        <td style="padding:8px 6px;">{r['P-Value']}</td>
-                        <td style="padding:8px 6px;">{r['Exact Test P-Value']}</td>
-                    </tr>
-                """
-            hwe_html += "</tbody></table>"
-            st.markdown(hwe_html, unsafe_allow_html=True)
+                c2_str = f"⚠️ {raw_c2:.4f} (Chi² ≥ 3.841)" if raw_c2 >= 3.841 else f"{raw_c2:.4f}"
+                hwe_table_disp.append({
+                    'SNP Variant': r['SNP Variant'],
+                    'Valid Samples (N)': r['Valid Samples (N)'],
+                    'Observed Genotypes': r['Observed Genotypes'],
+                    'Expected Genotypes': r['Expected Genotypes'],
+                    'Chi-Square (χ²)': c2_str,
+                    'df': r['Degrees of Freedom'],
+                    'P-Value': r['P-Value'],
+                    'Exact P-Val': r['Exact Test P-Value']
+                })
+            st.table(pd.DataFrame(hwe_table_disp))
 
         with c_hwe_fig:
             chi2_chart_df = pd.DataFrame([
