@@ -1,3 +1,14 @@
+---
+title: PGx Population Pharmacogenomics Platform
+emoji: 🧬
+colorFrom: blue
+colorTo: indigo
+sdk: streamlit
+sdk_version: 1.41.1
+app_file: app.py
+pinned: false
+---
+
 # 🧬 Automated Population Pharmacogenomics Analysis Platform
 
 An industry-level, production-grade automated platform designed for genotype, allele frequency, Hardy–Weinberg Equilibrium (HWE), regional/gender demographic stratification, and CYP2C19 star allele / diplotype / CPIC phenotype classification.
@@ -86,14 +97,14 @@ The platform executes an 11-stage automated pipeline upon dataset upload:
 
 ## 💾 3. Database Architecture & Automated Batch Updates
 
-### Why SQLite Was Chosen
+### 3.1 Why SQLite Was Chosen
 The platform utilizes **SQLite** (`database/db_manager.py` $\rightarrow$ `pharmacogenomics.db`) as its core persistence backend.
 - **Zero Configuration Overhead**: Lightweight, serverless embedded database requiring zero database administration or external daemon processes.
 - **ACID Compliance & Reliability**: Ensures atomic transactions, preventing database corruption during batch sample writes.
 - **Local Zero-Latency Access**: Disk-backed persistence allows instant query execution and in-memory caching.
 - **High Performance Scaling**: Optimized to handle initial cohorts of **1,000 samples**, scaling seamlessly to **1,200**, **2,000**, and **10,000+ samples**.
 
-### How Data Updates & Recalculate Automatically
+### 3.2 How Data Updates & Recalculate Automatically
 1. **Deduplication Engine**: Every sample is assigned a primary key (`Sample_ID`). When a new sample batch is ingested, the engine verifies `Sample_ID` against historical records.
 2. **Incremental Batch Appending**: New unique patient records are appended to the `samples` database table.
 3. **Automatic Recalculation**: Upon inserting new records, the analytical engine automatically re-triggers statistical pipelines across the combined dataset, updating all overall, regional, gender, and diplotype/phenotype distributions in real time.
@@ -102,14 +113,14 @@ The platform utilizes **SQLite** (`database/db_manager.py` $\rightarrow$ `pharma
 
 ## 🔬 4. Analytical Methodology & Formulas
 
-### A. Allele & Genotype Frequencies
+### 4.1 Allele & Genotype Frequencies
 For a locus with Reference allele $A$ and Variant allele $a$, with valid sample size $N$:
 - **Genotype Frequencies**:
   $$f(AA) = \frac{N_{AA}}{N}, \quad f(Aa) = \frac{N_{Aa}}{N}, \quad f(aa) = \frac{N_{aa}}{N}$$
 - **Allele Frequencies**:
   $$p = f(A) = \frac{2 N_{AA} + N_{Aa}}{2 N}, \quad q = f(a) = \frac{2 N_{aa} + N_{Aa}}{2 N} = 1 - p$$
 
-### B. Hardy–Weinberg Equilibrium (HWE) & Chi-Square Test
+### 4.2 Hardy–Weinberg Equilibrium (HWE) & Chi-Square Test
 - **Expected Genotype Counts**:
   $$E_{AA} = N \cdot p^2, \quad E_{Aa} = N \cdot 2pq, \quad E_{aa} = N \cdot q^2$$
 - **Chi-Square Goodness-of-Fit Statistic ($\chi^2$, $df = 1$)**:
@@ -119,7 +130,7 @@ For a locus with Reference allele $A$ and Variant allele $a$, with valid sample 
 - **Critical Threshold**: $\chi^2 \ge 3.841$ ($\alpha = 0.05$). Values $\ge 3.841$ indicate deviation from HWE and are highlighted with a **bright red warning badge (`⚠️ Chi² ≥ 3.841`)**.
 - **Haldane Exact Test**: Automatically triggered when any expected count $E < 5$ to prevent Chi-square small-sample bias.
 
-### C. 3-Tier Demographic Gazetteer Engine
+### 4.3 3-Tier Demographic Gazetteer Engine
 Samples are assigned to 5 geographic regions using a 3-tier lookup priority:
 1. **South India**: Tamil Nadu, Kerala, Karnataka, Andhra Pradesh, Telangana, Puducherry, Lakshadweep.
 2. **North India**: Delhi, Punjab, Haryana, Himachal Pradesh, Jammu & Kashmir, Ladakh, Uttarakhand, Uttar Pradesh.
@@ -127,7 +138,7 @@ Samples are assigned to 5 geographic regions using a 3-tier lookup priority:
 4. **West India**: Maharashtra, Gujarat, Goa, Rajasthan, Dadra & Nagar Haveli, Daman & Diu.
 5. **Central India**: Madhya Pradesh, Chhattisgarh.
 
-### D. CPIC CYP2C19 Metabolizer Phenotype Translation Matrix
+### 4.4 CPIC CYP2C19 Metabolizer Phenotype Translation Matrix
 
 | Diplotype Call | CPIC Metabolizer Phenotype | Activity Score | Functional Description |
 | :--- | :--- | :---: | :--- |
@@ -175,13 +186,13 @@ analysis tools/
 
 ## 🚀 6. How to Run & Test
 
-### A. Execute Web Application Dashboard
+### 6.1 Execute Web Application Dashboard
 ```bash
 python3 -m streamlit run app.py
 ```
 *Access the web dashboard in your browser at `http://localhost:8501`.*
 
-### B. Execute Automated Unit Test Suite
+### 6.2 Execute Automated Unit Test Suite
 ```bash
 python3 -m pytest tests/
 ```
