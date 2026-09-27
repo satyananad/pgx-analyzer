@@ -230,6 +230,9 @@ if os.path.exists(DELETED_FLAG_FILE):
 if 'is_deleted' not in st.session_state:
     st.session_state['is_deleted'] = False
 
+if 'show_delete_confirm' not in st.session_state:
+    st.session_state['show_delete_confirm'] = False
+
 if 'uploaded_df' not in st.session_state:
     st.session_state['uploaded_df'] = None
 
@@ -267,6 +270,7 @@ def reset_all_data():
     st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
     st.session_state['mapped_cols'] = {}
     st.session_state['last_uploaded_file_id'] = None
+    st.session_state['show_delete_confirm'] = False
     st.session_state['workflow_step'] = '1 · Upload'
     
     # Write persistent disk marker so deletion survives app restarts, browser refreshes, and new tabs
@@ -325,10 +329,23 @@ with st.sidebar:
     
     st.divider()
     st.markdown("### Workspace Control")
-    if st.button("🗑️ Reset Workspace (Start Fresh)", type="secondary", use_container_width=True):
-        reset_all_data()
-        st.success("Workspace reset to 0 samples.")
-        st.rerun()
+    
+    if st.session_state.get('show_delete_confirm', False):
+        st.warning("⚠️ **Warning: Delete Active Dataset?**\nThis will permanently delete the current dataset and reset workspace to 0 samples. This action cannot be undone.")
+        c_del1, c_del2 = st.columns(2)
+        with c_del1:
+            if st.button("🔴 Delete", type="primary", use_container_width=True, key="btn_sb_confirm_del"):
+                reset_all_data()
+                st.success("Dataset deleted.")
+                st.rerun()
+        with c_del2:
+            if st.button("❌ Cancel", type="secondary", use_container_width=True, key="btn_sb_cancel_del"):
+                st.session_state['show_delete_confirm'] = False
+                st.rerun()
+    else:
+        if st.button("🗑️ Delete Active Dataset", type="secondary", use_container_width=True, key="btn_sb_init_del"):
+            st.session_state['show_delete_confirm'] = True
+            st.rerun()
 
 # Execute Pipeline
 df_raw = st.session_state['uploaded_df']
@@ -989,16 +1006,31 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
         c_space, c_next = st.columns([0.75, 0.25])
         with c_next:
             if st.button("Continue →", type="primary", use_container_width=True, key="btn_step1_cont"):
-                st.session_state['workflow_step'] = '2 · Map columns'
+                if has_active_data():
+                    st.session_state['workflow_step'] = '3 · Results'
+                else:
+                    st.session_state['workflow_step'] = '2 · Map columns'
                 st.rerun()
 
         st.divider()
 
         with st.expander("🛠️ Advanced Workspace Actions & Manual Record Entry", expanded=False):
-            if st.button("🗑️ Reset Workspace (Start Fresh)", type="secondary", use_container_width=True, key="btn_exp_reset"):
-                reset_all_data()
-                st.success("Workspace reset to 0 samples.")
-                st.rerun()
+            if st.session_state.get('show_delete_confirm', False):
+                st.warning("⚠️ **Warning: Delete Active Dataset?**\nThis will permanently delete the current dataset and reset workspace to 0 samples. This action cannot be undone.")
+                c_del_exp1, c_del_exp2 = st.columns(2)
+                with c_del_exp1:
+                    if st.button("🔴 Permanently Delete Dataset", type="primary", use_container_width=True, key="btn_exp_confirm_del"):
+                        reset_all_data()
+                        st.success("Active dataset permanently deleted.")
+                        st.rerun()
+                with c_del_exp2:
+                    if st.button("❌ Cancel", type="secondary", use_container_width=True, key="btn_exp_cancel_del"):
+                        st.session_state['show_delete_confirm'] = False
+                        st.rerun()
+            else:
+                if st.button("🗑️ Delete Active Dataset", type="secondary", use_container_width=True, key="btn_exp_reset"):
+                    st.session_state['show_delete_confirm'] = True
+                    st.rerun()
 
             st.markdown("<br>", unsafe_allow_html=True)
 
