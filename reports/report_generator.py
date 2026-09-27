@@ -109,7 +109,10 @@ class ReportGenerator:
             # 3. Regional Tabs (North, South, East, West)
             regional_results = full_results.get('regional', {})
             for reg_name, reg_data in regional_results.items():
-                sheet_title = reg_name.replace(' ', '_')[:31]  # Excel 31 char sheet limit
+                safe_reg_name = "".join([c for c in str(reg_name) if c.isalnum() or c in [' ', '_']]).strip()
+                sheet_title = safe_reg_name.replace(' ', '_')[:31]  # Excel 31 char sheet limit
+                if not sheet_title:
+                    sheet_title = "Region"
                 reg_df = cls._dict_to_summary_table(reg_data)
                 reg_df.to_excel(writer, sheet_name=sheet_title, index=False)
                 
