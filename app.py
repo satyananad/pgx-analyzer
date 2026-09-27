@@ -981,24 +981,61 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
     if 'workflow_step' not in st.session_state:
         st.session_state['workflow_step'] = '1 · Upload'
 
-    step_cols = st.columns(3)
-    t1 = "primary" if st.session_state['workflow_step'] == '1 · Upload' else "secondary"
-    t2 = "primary" if st.session_state['workflow_step'] == '2 · Map columns' else "secondary"
-    t3 = "primary" if st.session_state['workflow_step'] == '3 · Results' else "secondary"
+    main_tab_home, main_tab_about = st.tabs(["🏠 Home Workspace", "ℹ️ About Platform"])
 
-    if step_cols[0].button("1 · Upload", use_container_width=True, type=t1, key="nav_btn_step1"):
-        st.session_state['workflow_step'] = '1 · Upload'
-        st.rerun()
+    with main_tab_about:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1E1B4B 0%, #2E1065 50%, #1E3A8A 100%); border-radius: 12px; padding: 2rem 2.2rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(30, 27, 75, 0.25); border: 1px solid #4C1D95;">
+            <h2 style="color: #F8FAFC; font-family: Georgia, serif; font-weight: 700; margin-top: 0; margin-bottom: 0.6rem; font-size: 1.65rem; letter-spacing: -0.01em;">
+                🧬 About PGx Analytics Pro Platform
+            </h2>
+            <p style="color: #E2E8F0; font-size: 0.95rem; line-height: 1.65; margin-bottom: 1.2rem;">
+                PGx Analytics Pro is an automated population pharmacogenomics analysis platform designed for standardized, end-to-end evaluation of pharmacogenetic variants across diverse geographic and demographic cohorts. The platform replaces manual spreadsheet calculations with instant quality control, Hardy–Weinberg Equilibrium (HWE) testing, regional demographic stratification, and CPIC metabolizer phenotype translation.
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.2rem;">
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #A7F3D0; font-weight: 700; letter-spacing: 0.05em;">Target Gene & SNPs</div>
+                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">CYP2C19 (*2, *3, *17)</div>
+                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">rs4244285, rs4986893, rs12248560</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #93C5FD; font-weight: 700; letter-spacing: 0.05em;">Statistical & HWE Engine</div>
+                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
+                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">Critical threshold χ² ≥ 3.841</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #FDE68A; font-weight: 700; letter-spacing: 0.05em;">Demographic Stratification</div>
+                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">5 Geographic Regions</div>
+                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">South, North, East, West, Central</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #F472B6; font-weight: 700; letter-spacing: 0.05em;">CPIC Phenotype Calling</div>
+                    <div style="font-size: 0.95rem; color: #FFFFFF; font-weight: 600; margin-top: 0.3rem;">5 Metabolizer Classes</div>
+                    <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.2rem;">UM, RM, NM, IM, PM</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if step_cols[1].button("2 · Map columns", use_container_width=True, type=t2, key="nav_btn_step2"):
-        st.session_state['workflow_step'] = '2 · Map columns'
-        st.rerun()
+    with main_tab_home:
+        step_cols = st.columns(3)
+        t1 = "primary" if st.session_state['workflow_step'] == '1 · Upload' else "secondary"
+        t2 = "primary" if st.session_state['workflow_step'] == '2 · Map columns' else "secondary"
+        t3 = "primary" if st.session_state['workflow_step'] == '3 · Results' else "secondary"
 
-    if step_cols[2].button("3 · Results", use_container_width=True, type=t3, key="nav_btn_step3"):
-        st.session_state['workflow_step'] = '3 · Results'
-        st.rerun()
+        if step_cols[0].button("1 · Upload", use_container_width=True, type=t1, key="nav_btn_step1"):
+            st.session_state['workflow_step'] = '1 · Upload'
+            st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
+        if step_cols[1].button("2 · Map columns", use_container_width=True, type=t2, key="nav_btn_step2"):
+            st.session_state['workflow_step'] = '2 · Map columns'
+            st.rerun()
+
+        if step_cols[2].button("3 · Results", use_container_width=True, type=t3, key="nav_btn_step3"):
+            st.session_state['workflow_step'] = '3 · Results'
+            st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # STEP 1: UPLOAD (Matching Image 1)
