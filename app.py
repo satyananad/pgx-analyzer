@@ -223,6 +223,32 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # 2. SESSION STATE MANAGEMENT & FAST PIPELINE CACHING
 # -----------------------------------------------------------------------------
 DELETED_FLAG_FILE = ".data_deleted.flag"
+ACTIVE_DATASET_CACHE = ".active_dataset.pkl"
+
+def save_active_dataset(df: pd.DataFrame):
+    """Saves active dataset to disk so it persists across page reloads and browser refreshes."""
+    if df is not None and len(df) > 0:
+        try:
+            df.to_pickle(ACTIVE_DATASET_CACHE)
+        except Exception:
+            pass
+
+def load_persisted_dataset() -> pd.DataFrame:
+    """Loads dataset from persistent disk cache file if present."""
+    if os.path.exists(ACTIVE_DATASET_CACHE):
+        try:
+            return pd.read_pickle(ACTIVE_DATASET_CACHE)
+        except Exception:
+            pass
+    return None
+
+def clear_active_dataset_cache():
+    """Removes persistent dataset cache file."""
+    if os.path.exists(ACTIVE_DATASET_CACHE):
+        try:
+            os.remove(ACTIVE_DATASET_CACHE)
+        except Exception:
+            pass
 
 if os.path.exists(DELETED_FLAG_FILE):
     st.session_state['is_deleted'] = True
@@ -245,7 +271,14 @@ EMPTY_COLS = [
     'CYP2C19*2 (rs4244285)', 'CYP2C19*3 (rs4986893)', 'CYP2C19*17 ( rs12248560)'
 ]
 
-# Default to empty dataset (0 samples) on cold start so application starts fresh
+# Auto-restore active dataset from disk cache if session state was cleared by a page reload/refresh
+if not st.session_state.get('is_deleted', False) and (st.session_state['uploaded_df'] is None or len(st.session_state['uploaded_df']) == 0):
+    persisted_df = load_persisted_dataset()
+    if persisted_df is not None and len(persisted_df) > 0:
+        st.session_state['uploaded_df'] = persisted_df
+        if 'workflow_step' not in st.session_state or st.session_state['workflow_step'] == '1 · Upload':
+            st.session_state['workflow_step'] = '3 · Results'
+
 if st.session_state['uploaded_df'] is None:
     st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
 
@@ -273,6 +306,8 @@ def reset_all_data():
     st.session_state['show_delete_confirm'] = False
     st.session_state['workflow_step'] = '1 · Upload'
     
+    clear_active_dataset_cache()
+
     # Write persistent disk marker so deletion survives app restarts, browser refreshes, and new tabs
     try:
         with open(DELETED_FLAG_FILE, "w") as f:
@@ -585,24 +620,34 @@ def render_unified_results(full_results: dict, qc_report: dict):
             
         c_hwe_tbl, c_hwe_fig = st.columns([1.1, 0.9])
         with c_hwe_tbl:
-            hwe_df = pd.DataFrame([{
-                'SNP Variant': r['SNP Variant'],
-                'Valid Samples (N)': r['Valid Samples (N)'],
-                'Observed Genotypes': r['Observed Genotypes'],
-                'Expected Genotypes': r['Expected Genotypes'],
-                'Chi-Square (χ²)': f"⚠️ {r['_raw_chi2']:.4f} (Chi² ≥ 3.841)" if r['_raw_chi2'] >= 3.841 else f"{r['_raw_chi2']:.4f}",
-                'df': r['Degrees of Freedom'],
-                'P-Value': r['P-Value'],
-                'Exact P-Val': r['Exact Test P-Value']
-            } for r in hwe_table_rows])
+            HWE_HEADERS = [
+                'SNP Variant', 'Valid Samples (N)', 'Observed Genotypes', 
+                'Expected Genotypes', 'Chi-Square (χ²)', 'df', 'P-Value', 'Exact P-Val'
+            ]
+            if not hwe_table_rows:
+                hwe_df = pd.DataFrame(columns=HWE_HEADERS)
+            else:
+                hwe_df = pd.DataFrame([{
+                    'SNP Variant': r['SNP Variant'],
+                    'Valid Samples (N)': r['Valid Samples (N)'],
+                    'Observed Genotypes': r['Observed Genotypes'],
+                    'Expected Genotypes': r['Expected Genotypes'],
+                    'Chi-Square (χ²)': f"⚠️ {r['_raw_chi2']:.4f} (Chi² ≥ 3.841)" if r['_raw_chi2'] >= 3.841 else f"{r['_raw_chi2']:.4f}",
+                    'df': r['Degrees of Freedom'],
+                    'P-Value': r['P-Value'],
+                    'Exact P-Val': r['Exact Test P-Value']
+                } for r in hwe_table_rows])
 
             def style_hwe_chi2(val):
                 if '⚠️' in str(val) or 'Chi²' in str(val):
                     return 'background-color: #FEE2E2; color: #DC2626; font-weight: bold; border-radius: 4px;'
                 return 'color: #166534; font-weight: 600;'
 
-            styled_hwe = hwe_df.style.map(style_hwe_chi2, subset=['Chi-Square (χ²)'])
-            st.dataframe(styled_hwe, use_container_width=True, hide_index=True)
+            if not hwe_df.empty and 'Chi-Square (χ²)' in hwe_df.columns:
+                styled_hwe = hwe_df.style.map(style_hwe_chi2, subset=['Chi-Square (χ²)'])
+                st.dataframe(styled_hwe, use_container_width=True, hide_index=True)
+            else:
+                st.dataframe(hwe_df, use_container_width=True, hide_index=True)
 
         with c_hwe_fig:
             chi2_chart_df = pd.DataFrame([
@@ -1139,6 +1184,7 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                         st.session_state['uploaded_df'] = df_load
                         st.session_state['mapped_cols'] = {}
                         st.session_state['workflow_step'] = '3 · Results'
+                        save_active_dataset(df_load)
                         load_success = True
                     except Exception as e:
                         st.error(f"Error loading file: {e}")
@@ -1230,7 +1276,8 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                             st.session_state['uploaded_df'] = pd.concat([st.session_state['uploaded_df'], pd.DataFrame([new_row])], ignore_index=True)
                         else:
                             st.session_state['uploaded_df'] = pd.DataFrame([new_row])
-                            
+                        
+                        save_active_dataset(st.session_state['uploaded_df'])
                         st.session_state['workflow_step'] = '3 · Results'
                         st.success(f"Sample {in_sid} added successfully!")
                         st.rerun()
