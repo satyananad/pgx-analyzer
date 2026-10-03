@@ -280,6 +280,9 @@ if 'uploaded_df' not in st.session_state:
 if 'mapped_cols' not in st.session_state:
     st.session_state['mapped_cols'] = {}
 
+if 'datasets_dict' not in st.session_state:
+    st.session_state['datasets_dict'] = {}
+
 EMPTY_COLS = [
     'sample ID', 'Gender', 'Date of Birth', 'Native place ', 'State',
     'Test requested', 'Is their family lived at Native place for past 3 generations?',
@@ -317,6 +320,7 @@ def reset_all_data():
     st.session_state['is_deleted'] = True
     st.session_state['uploaded_df'] = pd.DataFrame(columns=EMPTY_COLS)
     st.session_state['mapped_cols'] = {}
+    st.session_state['datasets_dict'] = {}
     st.session_state['last_uploaded_file_id'] = None
     st.session_state['show_delete_confirm'] = False
     st.session_state['workflow_step'] = '1 · Upload'
@@ -1248,7 +1252,7 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                         clear_deletion_flag()
                         st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
                         st.session_state['uploaded_df'] = merged_df
-                        st.session_state['datasets_dict']['Master Merged Dataset'] = merged_df
+                        st.session_state.setdefault('datasets_dict', {})['Master Merged Dataset'] = merged_df
                         st.session_state['pending_new_df'] = None
                         st.session_state['pending_file_id'] = None
                         st.session_state['pending_file_name'] = None
@@ -1261,7 +1265,7 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                         new_df = st.session_state['pending_new_df']
                         fname = st.session_state.get('pending_file_name', 'New File')
                         clear_deletion_flag()
-                        st.session_state['datasets_dict'][f"Dataset 1 (Active)"] = st.session_state['uploaded_df']
+                        st.session_state.setdefault('datasets_dict', {})[f"Dataset 1 (Active)"] = st.session_state['uploaded_df']
                         st.session_state['datasets_dict'][f"Dataset 2 ({fname})"] = new_df
                         st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
                         st.session_state['uploaded_df'] = new_df
