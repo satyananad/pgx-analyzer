@@ -201,12 +201,27 @@ CUSTOM_CSS = """
         margin-bottom: 1rem;
     }
 
-    /* Hide Streamlit Header, Footer, MainMenu, Toolbar, and Community Cloud Badges */
+    /* Header container transparent while keeping sidebar toggle button visible */
+    [data-testid="stHeader"] {
+        background-color: transparent !important;
+        z-index: 99999 !important;
+    }
+    
+    /* Ensure Sidebar Expand/Collapse Toggle Button is always visible */
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: block !important;
+        color: #0F172A !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 6px !important;
+        margin: 0.5rem !important;
+    }
+
+    /* Hide Streamlit Footer, MainMenu, Toolbar, and Community Cloud Badges */
     #MainMenu {visibility: hidden !important; display: none !important;}
-    header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-    [data-testid="stHeader"] {visibility: hidden !important; display: none !important;}
     [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
     [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
     [data-testid="stReportViewer"] footer {display: none !important;}
