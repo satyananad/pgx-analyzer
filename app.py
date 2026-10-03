@@ -435,12 +435,30 @@ def render_unified_results(full_results: dict, qc_report: dict):
         'Male': full_results.get('gender', {}).get('Male', {})
     }
 
-    # Helper for Sub-cohort Pills UI
+    # Helper for Sub-cohort & State-Wise Filter UI
     def render_subcohort_pills(key_prefix):
+        st_dict = full_results.get('state_wise', {})
         pill_options = [f"{k} (n={v.get('sample_count', 0)})" for k, v in cohort_dict.items() if v]
-        selected = st.radio("Select Sub-Cohort Filter Profile:", pill_options, horizontal=True, key=f"{key_prefix}_subcohort")
-        sel_key = selected.split(' (')[0]
-        return sel_key, cohort_dict.get(sel_key, full_results['overall'])
+        
+        c_pill, c_state = st.columns([1.1, 0.9])
+        with c_pill:
+            selected_pill = st.radio("Select Sub-Cohort Profile:", pill_options, horizontal=True, key=f"{key_prefix}_subcohort_pills")
+        
+        state_items = sorted([(s, data.get('sample_count', 0)) for s, data in st_dict.items() if data.get('sample_count', 0) > 0])
+        state_options = ["(All States / Default)"] + [f"{s} (n={cnt})" for s, cnt in state_items]
+        
+        with c_state:
+            selected_state_str = st.selectbox("🗺️ Select State-Wise Profile Data:", state_options, key=f"{key_prefix}_state_select")
+            
+        if selected_state_str != "(All States / Default)":
+            state_name = selected_state_str.split(" (n=")[0]
+            sel_key = f"State: {state_name}"
+            sel_cohort = st_dict.get(state_name, full_results['overall'])
+        else:
+            sel_key = selected_pill.split(' (')[0]
+            sel_cohort = cohort_dict.get(sel_key, full_results['overall'])
+            
+        return sel_key, sel_cohort
 
     # -------------------------------------------------------------------------
     # TAB 1: EXECUTIVE OVERVIEW
@@ -632,7 +650,7 @@ def render_unified_results(full_results: dict, qc_report: dict):
                     'Valid Samples (N)': r['Valid Samples (N)'],
                     'Observed Genotypes': r['Observed Genotypes'],
                     'Expected Genotypes': r['Expected Genotypes'],
-                    'Chi-Square (χ²)': f"⚠️ {r['_raw_chi2']:.4f} (Chi² ≥ 3.841)" if r['_raw_chi2'] >= 3.841 else f"{r['_raw_chi2']:.4f}",
+                    'Chi-Square (χ²)': f"⚠️ {r['_raw_chi2']:.4f} (Chi² ≥ 3.4)" if r['_raw_chi2'] >= 3.4 else f"{r['_raw_chi2']:.4f}",
                     'df': r['Degrees of Freedom'],
                     'P-Value': r['P-Value'],
                     'Exact P-Val': r['Exact Test P-Value']
@@ -656,25 +674,25 @@ def render_unified_results(full_results: dict, qc_report: dict):
             ])
             fig_hwe = px.bar(
                 chi2_chart_df, x='SNP', y='Chi2 Stat',
-                title=f"HWE Chi-Square (χ²) Stats vs Threshold 3.841 ({sel_key})",
+                title=f"HWE Chi-Square (χ²) Stats vs Threshold 3.4 ({sel_key})",
                 color='SNP',
                 color_discrete_sequence=['#2563EB', '#7C3AED', '#DB2777']
             )
-            fig_hwe.add_hline(y=3.841, line_dash="dash", line_color="red", annotation_text="Critical Threshold (3.841)")
+            fig_hwe.add_hline(y=3.4, line_dash="dash", line_color="red", annotation_text="Critical Threshold (3.4)")
             fig_hwe.update_layout(height=260, margin=dict(l=20, r=20, t=35, b=20))
             st.plotly_chart(fig_hwe, use_container_width=True)
         
-        st.markdown("##### Table 3. Chi-Square Distribution Reference Table (df = 1, α = 0.05, Critical = 3.841)")
+        st.markdown("##### Table 3. Chi-Square Distribution Reference Table (df = 1, α = 0.05, Critical = 3.4)")
         chi2_ref_df = pd.DataFrame([{
             'Level of Significance (α)': '0.50',
             '0.10': '2.706',
-            '0.05 (Critical Threshold)': '3.841',
+            '0.05 (Critical Threshold)': '3.4',
             '0.02': '5.412',
             '0.01': '6.635',
             '0.001': '10.827'
         }])
         st.table(chi2_ref_df)
-        st.info("📌 **HWE Decision Rule:** If $\\chi^2 \\ge 3.841$ ($P < 0.05$), population deviates from Hardy-Weinberg Equilibrium.")
+        st.info("📌 **HWE Decision Rule:** If $\\chi^2 \\ge 3.4$, population deviates from Hardy-Weinberg Equilibrium.")
 
     # -------------------------------------------------------------------------
     # TAB 4: POPULATION STRATIFICATION
@@ -1049,7 +1067,7 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                 <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1rem 1.2rem; border-left: 4px solid #60A5FA; backdrop-filter: blur(8px);">
                     <div style="font-size: 0.78rem; text-transform: uppercase; color: #93C5FD; font-weight: 800; letter-spacing: 0.06em;">Statistical & HWE Engine</div>
                     <div style="font-size: 1.15rem; color: #FFFFFF; font-weight: 700; margin-top: 0.3rem;">Chi-Square (χ²) & Haldane</div>
-                    <div style="font-size: 0.82rem; color: #CBD5E1; margin-top: 0.2rem;">Threshold χ² ≥ 3.841 (p ≤ 0.05)</div>
+                    <div style="font-size: 0.82rem; color: #CBD5E1; margin-top: 0.2rem;">Threshold χ² ≥ 3.4 (p ≤ 0.05)</div>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 1rem 1.2rem; border-left: 4px solid #FBBF24; backdrop-filter: blur(8px);">
                     <div style="font-size: 0.78rem; text-transform: uppercase; color: #FDE68A; font-weight: 800; letter-spacing: 0.06em;">Demographic Matrix</div>
@@ -1103,7 +1121,7 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                     <h4 style="margin:0; color:#1E293B; font-weight:700; font-size:1.1rem;">Hardy–Weinberg Equilibrium Red Warning Alerts</h4>
                 </div>
                 <p style="color:#64748B; font-size:0.92rem; line-height:1.5; margin:0;">
-                    Calculates observed vs expected genotype counts and automatically highlights statistically significant HWE deviations (<code>χ² ≥ 3.841</code>) in bright red.
+                    Calculates observed vs expected genotype counts and automatically highlights statistically significant HWE deviations (<code>χ² ≥ 3.4</code>) in bright red.
                 </p>
             </div>
             <div style="background: #FFFFFF; border-radius: 12px; padding: 1.4rem; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid #D97706;">
@@ -1172,25 +1190,55 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
             if file_upload is not None:
                 uploaded_file_id = f"{file_upload.name}_{file_upload.size}"
                 if st.session_state.get('last_uploaded_file_id') != uploaded_file_id:
-                    load_success = False
                     try:
                         file_bytes = io.BytesIO(file_upload.getvalue())
                         if file_upload.name.lower().endswith('.csv'):
                             df_load = pd.read_csv(file_bytes)
                         else:
                             df_load = pd.read_excel(file_bytes)
-                        clear_deletion_flag()
-                        st.session_state['last_uploaded_file_id'] = uploaded_file_id
-                        st.session_state['uploaded_df'] = df_load
-                        st.session_state['mapped_cols'] = {}
-                        st.session_state['workflow_step'] = '3 · Results'
-                        save_active_dataset(df_load)
-                        load_success = True
+                        
+                        if has_active_data():
+                            st.session_state['pending_new_df'] = df_load
+                            st.session_state['pending_file_id'] = uploaded_file_id
+                        else:
+                            clear_deletion_flag()
+                            st.session_state['last_uploaded_file_id'] = uploaded_file_id
+                            st.session_state['uploaded_df'] = df_load
+                            st.session_state['mapped_cols'] = {}
+                            st.session_state['workflow_step'] = '2 · Map columns'
+                            save_active_dataset(df_load)
+                            st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples). Please map columns below.")
+                            st.rerun()
                     except Exception as e:
                         st.error(f"Error loading file: {e}")
-                    
-                    if load_success:
-                        st.success(f"Loaded: {file_upload.name} ({len(df_load):,} samples)")
+
+            if st.session_state.get('pending_new_df') is not None:
+                st.info("⚠️ **An active dataset is already loaded in your workspace!** How would you like to process this new dataset file?")
+                c_mrg1, c_mrg2 = st.columns(2)
+                with c_mrg1:
+                    if st.button("🔄 Merge with Active Dataset", type="primary", use_container_width=True, key="btn_merge_dataset"):
+                        merged_df = pd.concat([st.session_state['uploaded_df'], st.session_state['pending_new_df']], ignore_index=True)
+                        clear_deletion_flag()
+                        st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
+                        st.session_state['uploaded_df'] = merged_df
+                        st.session_state['pending_new_df'] = None
+                        st.session_state['pending_file_id'] = None
+                        st.session_state['workflow_step'] = '2 · Map columns'
+                        save_active_dataset(merged_df)
+                        st.success("Merged new dataset with active dataset! Move to Step 2 to review column mappings.")
+                        st.rerun()
+                with c_mrg2:
+                    if st.button("🆕 Replace Active Dataset (Separate Calculation)", type="secondary", use_container_width=True, key="btn_replace_dataset"):
+                        new_df = st.session_state['pending_new_df']
+                        clear_deletion_flag()
+                        st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
+                        st.session_state['uploaded_df'] = new_df
+                        st.session_state['mapped_cols'] = {}
+                        st.session_state['pending_new_df'] = None
+                        st.session_state['pending_file_id'] = None
+                        st.session_state['workflow_step'] = '2 · Map columns'
+                        save_active_dataset(new_df)
+                        st.success("Replaced active dataset with new file! Move to Step 2 to review column mappings.")
                         st.rerun()
 
             st.markdown("""
@@ -1202,10 +1250,7 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
             c_space, c_next = st.columns([0.75, 0.25])
             with c_next:
                 if st.button("Continue →", type="primary", use_container_width=True, key="btn_step1_cont"):
-                    if has_active_data():
-                        st.session_state['workflow_step'] = '3 · Results'
-                    else:
-                        st.session_state['workflow_step'] = '2 · Map columns'
+                    st.session_state['workflow_step'] = '2 · Map columns'
                     st.rerun()
 
             st.divider()
