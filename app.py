@@ -417,6 +417,16 @@ def render_unified_results(full_results: dict, qc_report: dict):
         st.info("ℹ️ Workspace is empty (0 samples). All existing data was deleted. Upload a new Excel/CSV dataset file or add sample records on Page 1.")
         return
 
+    if len(st.session_state.get('datasets_dict', {})) > 1:
+        st.markdown("### 📂 Multi-Dataset Profile View")
+        ds_list = list(st.session_state['datasets_dict'].keys())
+        sel_ds_name = st.selectbox("Select Active Dataset Profile for Separate Calculation:", ds_list, key="sel_multi_ds_switcher")
+        if sel_ds_name and st.session_state.get('active_ds_name') != sel_ds_name:
+            st.session_state['active_ds_name'] = sel_ds_name
+            st.session_state['uploaded_df'] = st.session_state['datasets_dict'][sel_ds_name]
+            st.rerun()
+        st.divider()
+
     ov = full_results['overall']
     tot_samples = qc_report.get('total_samples', ov['sample_count'])
     fully_valid = qc_report.get('fully_valid_samples', ov['sample_count'])
@@ -1215,10 +1225,12 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
                         if has_active_data():
                             st.session_state['pending_new_df'] = df_load
                             st.session_state['pending_file_id'] = uploaded_file_id
+                            st.session_state['pending_file_name'] = file_upload.name
                         else:
                             clear_deletion_flag()
                             st.session_state['last_uploaded_file_id'] = uploaded_file_id
                             st.session_state['uploaded_df'] = df_load
+                            st.session_state['datasets_dict'] = {f"Active Dataset ({file_upload.name})": df_load}
                             st.session_state['mapped_cols'] = {}
                             st.session_state['workflow_step'] = '2 · Map columns'
                             save_active_dataset(df_load)
@@ -1229,28 +1241,50 @@ def render_workflow_pipeline(df_raw, full_results, qc_report):
 
             if st.session_state.get('pending_new_df') is not None:
                 st.info("⚠️ **An active dataset is already loaded in your workspace!** How would you like to process this new dataset file?")
-                c_mrg1, c_mrg2 = st.columns(2)
+                c_mrg1, c_mrg2, c_mrg3 = st.columns(3)
                 with c_mrg1:
                     if st.button("🔄 Merge with Active Dataset", type="primary", use_container_width=True, key="btn_merge_dataset"):
                         merged_df = pd.concat([st.session_state['uploaded_df'], st.session_state['pending_new_df']], ignore_index=True)
                         clear_deletion_flag()
                         st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
                         st.session_state['uploaded_df'] = merged_df
+                        st.session_state['datasets_dict']['Master Merged Dataset'] = merged_df
                         st.session_state['pending_new_df'] = None
                         st.session_state['pending_file_id'] = None
+                        st.session_state['pending_file_name'] = None
                         st.session_state['workflow_step'] = '2 · Map columns'
                         save_active_dataset(merged_df)
                         st.success("Merged new dataset with active dataset! Move to Step 2 to review column mappings.")
                         st.rerun()
                 with c_mrg2:
-                    if st.button("🆕 Replace Active Dataset (Separate Calculation)", type="secondary", use_container_width=True, key="btn_replace_dataset"):
+                    if st.button("📁 Keep as Separate Dataset", type="primary", use_container_width=True, key="btn_separate_dataset"):
                         new_df = st.session_state['pending_new_df']
+                        fname = st.session_state.get('pending_file_name', 'New File')
                         clear_deletion_flag()
+                        st.session_state['datasets_dict'][f"Dataset 1 (Active)"] = st.session_state['uploaded_df']
+                        st.session_state['datasets_dict'][f"Dataset 2 ({fname})"] = new_df
                         st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
                         st.session_state['uploaded_df'] = new_df
                         st.session_state['mapped_cols'] = {}
                         st.session_state['pending_new_df'] = None
                         st.session_state['pending_file_id'] = None
+                        st.session_state['pending_file_name'] = None
+                        st.session_state['workflow_step'] = '2 · Map columns'
+                        save_active_dataset(new_df)
+                        st.success(f"Added '{fname}' as a separate dataset for independent calculation! Move to Step 2 to review column mappings.")
+                        st.rerun()
+                with c_mrg3:
+                    if st.button("🆕 Replace Active Dataset", type="secondary", use_container_width=True, key="btn_replace_dataset"):
+                        new_df = st.session_state['pending_new_df']
+                        fname = st.session_state.get('pending_file_name', 'New File')
+                        clear_deletion_flag()
+                        st.session_state['last_uploaded_file_id'] = st.session_state['pending_file_id']
+                        st.session_state['uploaded_df'] = new_df
+                        st.session_state['datasets_dict'] = {f"Active Dataset ({fname})": new_df}
+                        st.session_state['mapped_cols'] = {}
+                        st.session_state['pending_new_df'] = None
+                        st.session_state['pending_file_id'] = None
+                        st.session_state['pending_file_name'] = None
                         st.session_state['workflow_step'] = '2 · Map columns'
                         save_active_dataset(new_df)
                         st.success("Replaced active dataset with new file! Move to Step 2 to review column mappings.")
